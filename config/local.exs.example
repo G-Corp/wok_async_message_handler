@@ -1,0 +1,5 @@
+use Mix.Config
+
+config :wok_async_message_handler, WokAsyncMessageHandler.Repo,
+       username: "username",
+       hostname: "127.0.0.1"
