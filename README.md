@@ -2,6 +2,7 @@
 
 Async message producer to use with wok 0.4.4
 Include mix task to generate ecto migrations for messages and partitions.
+Include mix task to generate serializer for ecto schema.
 
 ## Installation
 
@@ -12,11 +13,11 @@ in your mix.exs file, include in deps:
 ...]
 ```
 
-generate migrations (only for Ecto):
+generate required files:
 ```
 mix wok_async_message_handler.init
 ```
-This will create 2 ecto migrations and schema module:
+This will create 2 ecto migrations and their schema module, serializers folder and a default message handler:
 - WokAsyncMessageHandler.Models.EctoProducerMessage to store messages to send (3 fields : topic, partition, blob)
 - WokAsyncMessageHandler.Models.StoppedPartition to store stopped partition (when errors occur) and allow the connection to a monitoring system for example
 - lib/message_serializers directory to store message serializers for ecto schema
@@ -34,27 +35,9 @@ config :wok, producer: [handler: MyApp.Services.EctoMessageProducer, frequency: 
 
 create a serializer for your ecto schema MyAppEctoSchema:
 ```
-defmodule MyApp.MessageSerializers.MyAppEctoSchema do
-  def message_versions, do: [1] #list of supported messages versions
-  def created(ecto_schema, version) do #serialization for 'created' event
-    case version do
-      1 -> %{id: ecto_schema.id, field1: value1, ...}
-    end
-  end
-  def updated(ecto_schema, _version) do #serialization for 'updated' event
-    case version do
-      1 -> %{id: ecto_schema.id, field1: value1, ...}
-    end
-  end
-  def destroyed(ecto_schema, _version) do #serialization for 'destroyed' event
-    case version do
-      1 -> %{id: ecto_schema.id}
-    end
-  end
-  def partition_key(ecto_schema), do: ecto_schema.id # schema field used to determine partition id
-  def message_route(event), do: "bot/resource/#{event}" # message route for "to" field in messages
-end
+mix wok_async_message_handler.serializer --schema MyAppEctoSchema
 ```
+Edit the generated serializer to add fields to serialization methods
 
 and now you can call functions in your code (be sure to add them always in a SQL transaction):
 ```
