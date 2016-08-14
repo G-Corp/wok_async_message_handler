@@ -67,8 +67,8 @@ my_app_ecto_schema = MyApp.Datastores.PG.get(MyApp.MyAppEctoSchema, 1)
 
 create a local file in config directory to configure database access (duplicate config/local.exs.example if ok)
 ```
-MIX_ENV=test mix async_wok_message_handler.init
-MIX_ENV=test ecto.create
-MIX_ENV=test ecto.migrate
+MIX_ENV=test mix wok_async_message_handler.init
+MIX_ENV=test mix ecto.create
+MIX_ENV=test mix ecto.migrate
 mix espec
 ```
