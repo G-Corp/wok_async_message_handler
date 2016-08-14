@@ -90,10 +90,10 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
         @datastore.insert!(%StoppedPartition{topic: message.topic, partition: message.partition, message_id: message_id, error: error})
       end
 
-      @spec log_warning(Ecto.Schema.t) :: no_return
+      @spec log_warning(String.t) :: no_return
       def log_warning(message), do: Logger.warn(message)
 
-      @spec log_warning(String.t) :: term
+      @spec schema_serializer(Ecto.Schema.t) :: term
       defp schema_serializer(schema) do
         schema_str = schema.__struct__
                     |> to_string
