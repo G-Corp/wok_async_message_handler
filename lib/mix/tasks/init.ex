@@ -5,8 +5,8 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
   @shortdoc "Create migration files for Ecto"
 
   def run(_args) do
-    app_name = Mix.Project.config[:app]
-    app_module = app_name |> to_string |> Macro.camelize
+    app_name = Mix.Project.config[:app] |> to_string
+    app_module = app_name |> Macro.camelize
     host_app_main_repo = Mix.Ecto.parse_repo([]) |> List.first
 
     migrations_path = Path.join("priv/#{host_app_main_repo |> Module.split |> List.last |> Macro.underscore}", "migrations")
@@ -25,10 +25,10 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
     Mix.shell.info [:green, "* creating ", :reset, Path.relative_to_cwd(Path.join models_app_path, "stopped_partition.ex")]
     File.cp! Path.join(models_source_path, "stopped_partition.ex"), Path.join(models_app_path, "stopped_partition.ex")
 
-    default_service = Path.join("lib", "services")
+    default_service = Path.join(["lib", app_name, "services"])
     create_directory(default_service)
     create_file Path.join(default_service, "wok_async_message_handler.ex"), service_template([app_module: app_module, app_name: app_name, repo: host_app_main_repo])
-    create_directory(Path.join("lib", "message_serializers"))
+    create_directory(Path.join ["lib", app_name, "message_serializers"] )
 
     msg = "\ninit finished.\nAll files generated. To finish setup, add this line to your config file:\n\nconfig :wok, producer: [handler: #{app_module}.Services.EctoMessageProducer, frequency: 100, number_of_messages: 1000]\n\n"
     Mix.shell.info [msg]
@@ -78,8 +78,8 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
 
   embed_template :service, """
   defmodule <%= @app_module %>.Services.WokAsyncMessageHandler do
-    @application <%= inspect @app_name %>
-    @producer_name "<%= @app_name |> to_string %>"
+    @application :<%= @app_name %>
+    @producer_name "<%= @app_name %>"
     @realtime_topic ""
     @datastore <%= @repo %>
     @serializers <%= @app_module %>.MessageSerializers
