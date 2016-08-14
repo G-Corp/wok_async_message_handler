@@ -6,7 +6,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
 
   def run(_) do
     host_app_main_repo = Mix.Ecto.parse_repo([]) |> List.first
-    migrations_path = Mix.Ecto.migrations_path(host_app_main_repo)
+    migrations_path = Path.join("priv/#{host_app_main_repo |> Module.split |> List.last |> Macro.underscore}", "migrations")
     create_directory(migrations_path)
     file = Path.join(migrations_path, "#{timestamp()}_add_ecto_producer_message.exs")
     create_file file, migration_template([host_app_main_repo: host_app_main_repo])
