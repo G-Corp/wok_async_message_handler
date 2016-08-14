@@ -37,7 +37,7 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
         end
       end
 
-      @spec build_message(Ecto.Schema.t, :atom, term) :: map()
+      @spec build_message(Ecto.Schema.t, :atom, module) :: map()
       defp build_message(ecto_schema, event, serializer) do
         Enum.map(serializer.message_versions, fn(version) ->
           %{
@@ -93,7 +93,7 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
       @spec log_warning(String.t) :: no_return
       def log_warning(message), do: Logger.warn(message)
 
-      @spec schema_serializer(Ecto.Schema.t) :: term
+      @spec schema_serializer(Ecto.Schema.t) :: module
       defp schema_serializer(schema) do
         schema_str = schema.__struct__
                     |> to_string
