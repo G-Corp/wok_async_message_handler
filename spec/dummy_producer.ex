@@ -1,5 +1,5 @@
 defmodule WokAsyncMessageHandler.DummyProducer do
-  defmodule TestMessageSerializer do
+  defmodule Serializers.TestEctoSchema do
     def message_versions, do: [1]
     def created(ecto_schema, _version), do: %{id: ecto_schema.id}
     def partition_key(ecto_schema), do: ecto_schema.id
@@ -10,6 +10,6 @@ defmodule WokAsyncMessageHandler.DummyProducer do
   @datastore WokAsyncMessageHandler.Repo
   @producer_name "from_bot"
   @realtime_topic "realtime_topic"
-  @serializer TestMessageSerializer
+  @serializers WokAsyncMessageHandler.DummyProducer.Serializers
   use WokAsyncMessageHandler.Bases.Ecto
 end

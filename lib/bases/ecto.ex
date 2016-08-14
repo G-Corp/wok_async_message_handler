@@ -20,10 +20,11 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
 
       @spec create_and_add_message_to_message_queue(Ecto.Schema.t, :atom, String.t) :: {:ok, EctoProducerMessage.t} | {:error, term}
       def create_and_add_message_to_message_queue(ecto_schema, event, topic) do
-        message = build_message(ecto_schema, event)
-        topic_partition = {topic, @serializer.partition_key(ecto_schema)}
+        serializer = schema_serializer(ecto_schema)
+        message = build_message(ecto_schema, event, serializer)
+        topic_partition = {topic, serializer.partition_key(ecto_schema)}
         from = @producer_name
-        to = @serializer.message_route(event)
+        to = serializer.message_route(event)
         build_and_store_message(topic_partition, from, to, message)
       end
 
@@ -36,11 +37,11 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
         end
       end
 
-      @spec build_message(Ecto.Schema.t, :atom) :: map()
-      defp build_message(ecto_schema, event) do
-        Enum.map(@serializer.message_versions, fn(version) ->
+      @spec build_message(Ecto.Schema.t, :atom, term) :: map()
+      defp build_message(ecto_schema, event, serializer) do
+        Enum.map(serializer.message_versions, fn(version) ->
           %{
-              payload: apply(@serializer, event, [ecto_schema, version]),
+              payload: apply(serializer, event, [ecto_schema, version]),
               version: version
             }
         end)
@@ -89,8 +90,17 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
         @datastore.insert!(%StoppedPartition{topic: message.topic, partition: message.partition, message_id: message_id, error: error})
       end
 
-      @spec log_warning(String.t) :: no_return
+      @spec log_warning(Ecto.Schema.t) :: no_return
       def log_warning(message), do: Logger.warn(message)
+
+      @spec log_warning(String.t) :: term
+      defp schema_serializer(schema) do
+        schema_str = schema.__struct__
+                    |> to_string
+                    |> String.split(".")
+                    |> List.last
+        Module.concat([@serializers, schema_str])
+      end
     end
   end
 end

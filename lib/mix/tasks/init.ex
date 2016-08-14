@@ -10,6 +10,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
     create_directory(migrations_path)
     file = Path.join(migrations_path, "#{timestamp()}_add_ecto_producer_message.exs")
     create_file file, migration_template([host_app_main_repo: host_app_main_repo])
+    :timer.sleep(1000)
     file = Path.join(migrations_path, "#{timestamp()}_add_ecto_producer_stopped_partitions.exs")
     create_file file, stopped_paritions_template([host_app_main_repo: host_app_main_repo])
   end
