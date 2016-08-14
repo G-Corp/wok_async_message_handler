@@ -1,7 +1,7 @@
 # WokAsyncMessageHandler
 
 Async message producer to use with wok 0.4.4
-Include mix task to generate ecto migrations for messages and partitions managed
+Include mix task to generate ecto migrations for messages and partitions.
 
 ## Installation
 
@@ -16,6 +16,9 @@ generate migrations (only for Ecto):
 ```
 mix async_wok_message_handler.init
 ```
+This will create 2 ecto schema module:
+- WokAsyncMessageHandler.Models.EctoProducerMessage to store messages to send (3 fields : topic, partition, blob)
+- WokAsyncMessageHandler.Models.StoppedPartition to store stopped partition (when errors occur) and allow the connection to a monitoring system for example
 
 if need, create your database (mix ecto.create), then run :
 ```
@@ -34,6 +37,11 @@ defmodule MyApp.Services.EctoMessageProducer do
 end
 ```
 
+add to your config file:
+```
+config :wok, producer: [handler: MyApp.Services.EctoMessageProducer, frequency: 100, number_of_messages: 1000]
+```
+
 create a serializer for your ecto schema MyAppEctoSchema:
 ```
 defmodule MyApp.MessageSerializers.MyAppEctoSchema do
@@ -46,11 +54,21 @@ defmodule MyApp.MessageSerializers.MyAppEctoSchema do
 end
 ```
 
-and now you can call functions in your code:
+and now you can call functions in your code (be sure to add them always in a SQL transaction):
 ```
 {:ok, message} = MyApp.Services.EctoMessageProducer
                  .create_and_add_rt_notification_to_message_queue(%{session_id: "my_session_id"})
 ...
 my_app_ecto_schema = MyApp.Datastores.PG.get(MyApp.MyAppEctoSchema, 1)
 {:ok, message} = MessageProducer.create_and_add_message_to_message_queue(my_app_ecto_schema, :created, "my_topic")
+```
+
+## test
+
+create a local file in config directory to configure database access (duplicate config/local.exs.example if ok)
+```
+MIX_ENV=test mix async_wok_message_handler.init
+MIX_ENV=test ecto.create
+MIX_ENV=test ecto.migrate
+mix espec
 ```
