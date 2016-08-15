@@ -15,15 +15,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
     create_file file, migration_template([host_app_main_repo: host_app_main_repo])
     :timer.sleep(1000)
     file = Path.join(migrations_path, "#{timestamp()}_add_ecto_producer_stopped_partitions.exs")
-
     create_file file, stopped_partitions_template([host_app_main_repo: host_app_main_repo])
-    models_source_path = Path.join(["deps", "wok_async_message_handler", "lib", "models"])
-    models_app_path = if File.exists?("web"), do: Path.join("web", "models"), else: Path.join("lib", "models")
-    create_directory(models_app_path)
-    Mix.shell.info [:green, "* creating ", :reset, Path.relative_to_cwd(Path.join models_app_path, "ecto_producer_message.ex")]
-    File.cp! Path.join(models_source_path, "ecto_producer_message.ex"), Path.join(models_app_path, "ecto_producer_message.ex")
-    Mix.shell.info [:green, "* creating ", :reset, Path.relative_to_cwd(Path.join models_app_path, "stopped_partition.ex")]
-    File.cp! Path.join(models_source_path, "stopped_partition.ex"), Path.join(models_app_path, "stopped_partition.ex")
 
     default_service = Path.join(["lib", app_name, "services"])
     create_directory(default_service)
