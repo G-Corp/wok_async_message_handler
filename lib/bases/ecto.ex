@@ -53,13 +53,13 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
         |> Enum.map(fn(message) -> {message.id, topic, partition, message.blob} end)
       end
 
-      @spec response(integer, term) :: :next | :exit
-      def response(message_id, response) do
-        process_response(message_id, response)
+      @spec response(integer, term, boolean) :: :next | :exit | :retry
+      def response(message_id, response, retry \\ false) do
+        process_response(message_id, response, retry)
       end
 
-      @spec process_response(integer, term) :: :next | :exit
-      def process_response(message_id, response) do
+      @spec process_response(integer, term, boolean) :: :next | :exit | :retry
+      def process_response(message_id, response, _retry) do
         case response do
           {:ok, _} ->
             delete_row(message_id)

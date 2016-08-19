@@ -86,7 +86,7 @@ defmodule BotsUnit.MessagesProducers.EctoSpec do
     let! :message, do: Repo.insert!(%EctoProducerMessage{topic: "topic", partition: 1, blob: "blob", inserted_at: t, updated_at: t})
     context "when message is sent without error" do
       before do
-        {:shared, result: MessageProducer.response(message.id, {:ok, :ok}) }
+        {:shared, result: MessageProducer.response(message.id, {:ok, :ok}, false) }
       end
       it do: expect( shared.result ).to eq(:next)
       it do: expect( Repo.get(EctoProducerMessage, message.id) ).to eq(nil)
@@ -96,7 +96,7 @@ defmodule BotsUnit.MessagesProducers.EctoSpec do
       before do
         allow(Repo).to accept(:delete, fn(_) -> {:error, "my error"} end)
         allow(BotsUnit.MessagesProducers.TestMessageProducer).to accept(:log_warning, fn(_message) -> nil end)
-        {:shared, result: MessageProducer.response(message.id, {:ok, :tuple}) }
+        {:shared, result: MessageProducer.response(message.id, {:ok, :tuple}, true) }
       end
       it do: expect( shared.result ).to eq(:exit)
       xit do: expect( BotsUnit.MessagesProducers.TestMessageProducer ).to accepted(:log_warning, :any, count: 1)
@@ -108,7 +108,7 @@ defmodule BotsUnit.MessagesProducers.EctoSpec do
       let! :message, do: Repo.insert!(%EctoProducerMessage{topic: "topic2", partition: 3, blob: "blob123", inserted_at: t, updated_at: t})
       before do
         allow(MessageProducer).to accept(:log_warning, fn(_message) -> nil end)
-        {:shared, result: MessageProducer.response(message.id, {:error, "an error"}) }
+        {:shared, result: MessageProducer.response(message.id, {:error, "an error"}, true) }
       end
       it do: expect( shared.result ).to eq(:exit)
       xit do: expect( MessageProducer ).to accepted(:log_warning, :any, count: 1)
@@ -120,7 +120,7 @@ defmodule BotsUnit.MessagesProducers.EctoSpec do
       let! :message, do: Repo.insert!(%EctoProducerMessage{topic: "topic23", partition: 5, blob: "blob987", inserted_at: t, updated_at: t})
       before do
         allow(MessageProducer).to accept(:log_warning, fn(_message) -> nil end)
-        {:shared, result: MessageProducer.response(message.id, {:stop, "middleware", "middle_error"}) }
+        {:shared, result: MessageProducer.response(message.id, {:stop, "middleware", "middle_error"}, true) }
       end
       it do: expect( shared.result ).to eq(:exit)
       xit do: expect( MessageProducer ).to accepted(:log_warning, :any, count: 1)
