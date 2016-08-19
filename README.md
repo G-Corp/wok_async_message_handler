@@ -4,11 +4,12 @@ Async message producer to use with wok 0.4.4
 Include mix task to generate ecto migrations for messages and partitions.
 Include mix task to generate serializer for ecto schema.
 The WokAsyncMessageHandler.Bases.Ecto module when used (with the 'use' macro)
-in another module allows to register messages to send in queue in your PG database.
+in another module allows to register messages to send in a queue in your PG database.
 Using it in a SQL transaction in your code garanties your messages reflect exactly
-your DB state and that they will be sent to your message broker later.
-When a message is registered, its id (autoincremented column by PG) let your consumers know
-if they already have processed this message.
+your DB state when they are written to BD and that they will be sent to your message broker later,
+ no matter what happens, by wok producer process.
+When a message is registered, its id (autoincremented column by PG, send in wok message headers as "message_id" param)
+lets your consumers know if they already have processed this message.
 It's an "at least once message dispatch, at least once message delivered and exactly once message processed" flow.
 
 
@@ -66,3 +67,4 @@ MIX_ENV=test mix ecto.create
 MIX_ENV=test mix ecto.migrate
 mix espec
 ```
+don't forget to clean your tests after (generated migrations files in priv/repo/migrations)
