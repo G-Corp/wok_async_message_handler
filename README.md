@@ -3,13 +3,14 @@
 Async message producer to use with wok 0.4.4
 Include mix task to generate ecto migrations for messages and partitions.
 Include mix task to generate serializer for ecto schema.
+
 The WokAsyncMessageHandler.Bases.Ecto module when used (with the 'use' macro)
 in another module allows to register messages to send in a queue in your PG database.
 Using it in a SQL transaction in your code garanties your messages reflect exactly
 your DB state when they are written to BD and that they will be sent to your message broker later,
  no matter what happens, by wok producer process.
 When a message is registered, its id (autoincremented column by PG, send in wok message headers as "message_id" param)
-lets your consumers know if they already have processed this message.
+lets your consumers, when they receive the message, know if they already have processed this message.
 It's an "at least once message dispatch, at least once message delivered and exactly once message processed" flow.
 
 

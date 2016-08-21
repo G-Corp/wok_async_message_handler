@@ -23,6 +23,6 @@
   "ranch": {:git, "https://github.com/ninenines/ranch", "741bfb73ca663394ecf7a73410506d66f01985a6", [ref: "1.1.0"]},
   "tempfile": {:git, "https://github.com/botsunit/tempfile.git", "2e52dccc34c41adc5ec93e5ef3571e0f9f0f5c16", [tag: "1.1.2"]},
   "uuid": {:git, "https://github.com/avtobiff/erlang-uuid.git", "585c2474afb4a597ae8c8bf6d21e5a9c73f18e0b", [tag: "v0.5.0"]},
-  "wok": {:git, "git@gitlab.botsunit.com:msaas/wok.git", "733795f05fc7c53d7cfa3e1a224772d183946c48", [tag: "0.4.4"]},
+  "wok": {:git, "git@gitlab.botsunit.com:msaas/wok.git", "733795f05fc7c53d7cfa3e1a224772d183946c48", [branch: "wok_cowboy"]},
   "wok_http_adapter": {:git, "git@gitlab.botsunit.com:msaas/wok_http_adapter.git", "1bb12ea5a3a60c9357903b1299ff3523817d8586", [tag: "0.1.1"]},
   "wok_message_handler": {:git, "git@gitlab.botsunit.com:msaas/wok_message_handler.git", "c186d00904ef08c5af92a258ef43cc37bbc5c8e9", [tag: "0.4.4"]}}
