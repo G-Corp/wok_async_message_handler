@@ -93,3 +93,21 @@ If you return an integer, it will be send to this partition number, but this beh
 
 - **message_route** :
 the 'to' field in your message.  
+
+## create_and_add_rt_notification_to_message_queue/1
+
+This method sends a realtime message. **This is an opinionated method.**  
+It just generates a message in queue table to "#{@producer_name}/real_time/notify" (@producer_name defined in your handler when you run the "init")  
+If it doesn't fit your needs, rewrite a method in your handler.  
+It takes a map as argument.  
+THE FIRST VALUE of this map will be used for kafka partition_key.  
+IT DOESN'T HANDLE VERSIONING OF RT MESSAGES FOR NOW.  
+
+If you need to send messages to a session_id, call :
+```
+create_and_add_rt_notification_to_message_queue(%{session_id: my_session_id})
+```
+
+The whole map will be merged into message :payload value with the %{source: @producer_name} map.  
+IE, create_and_add_rt_notification_to_message_queue(%{session_id: my_session_id}) will have a payload field with %{session_id: my_session_id, source: @producer_name}  
+Since a merge in elixir reorders map in alpabetical order, pay attention to the partition key (first value of the map).  
