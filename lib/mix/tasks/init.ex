@@ -16,13 +16,19 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
     :timer.sleep(1000)
     file = Path.join(migrations_path, "#{timestamp()}_add_ecto_producer_stopped_partitions.exs")
     create_file file, stopped_partitions_template([host_app_main_repo: host_app_main_repo])
+    :timer.sleep(1000)
+    file = Path.join(migrations_path, "#{timestamp()}_add_consumer_messages_indexes.exs")
+    create_file file, partition_indexes_template([host_app_main_repo: host_app_main_repo])
 
     default_service = Path.join(["lib", app_name, "services"])
     create_directory(default_service)
     create_file Path.join(default_service, "wok_async_message_handler.ex"), service_template([app_module: app_module, app_name: app_name, repo: host_app_main_repo])
     create_directory(Path.join ["lib", app_name, "message_serializers"] )
 
-    msg = "\ninit finished.\nAll files generated. To finish setup, add this line to your config file:\n\nconfig :wok, producer: [handler: #{app_module}.Services.EctoMessageProducer, frequency: 100, number_of_messages: 1000]\n\n"
+    msg = "\ninit finished.
+\nAll files generated. To finish setup, add this line to your config file:
+\n\nconfig :wok, producer: [handler: #{app_module}.Services.WokAsyncMessageHandler, frequency: 100, number_of_messages: 1000]
+\n\nlib/services/wok_async_message_handler.ex is a default message handler generated for you (YOU NEED TO PARAMETER THIS!!!!! DON'T FORGET TO LOOK AT IT!)\n\n"
     Mix.shell.info [msg]
   end
 
@@ -70,13 +76,30 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
 
   embed_template :service, """
   defmodule <%= @app_module %>.Services.WokAsyncMessageHandler do
-    @application :<%= @app_name %>
-    @producer_name "<%= @app_name %>"
-    @realtime_topic ""
-    @datastore <%= @repo %>
-    @serializers <%= @app_module %>.MessageSerializers
+    @application :<%= @app_name %> #should be your app name
+    @producer_name "<%= @app_name %>" #'from' field in messages
+    @realtime_topic "" #don't leave this blank!
+    @datastore <%= @repo %> #store module for messages
+    @serializers <%= @app_module %>.MessageSerializers #your serializers module "namespace"
     use WokAsyncMessageHandler.Bases.Ecto
   end
 
+  """
+
+  embed_template :partition_indexes, """
+  defmodule <%= inspect @host_app_main_repo %>.Migrations.AddConsumerMessageIndexes do
+    use Ecto.Migration
+
+    def change do
+      create table(:consumer_message_indexes) do
+        add :topic, :string, null: false
+        add :partition, :integer, null: false
+        add :message_id, :integer, null: false
+        timestamps
+      end
+      create index(:consumer_message_indexes, [:partition])
+      create index(:consumer_message_indexes, [:topic])
+    end
+  end
   """
 end

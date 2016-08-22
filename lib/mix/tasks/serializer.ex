@@ -17,6 +17,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Serializer do
   embed_template :serializer, """
   defmodule <%= @app_module %>.MessageSerializers.<%= @schema %> do
     def message_versions, do: [1]
+
     def created(ecto_schema, version) do
       case version do
         1 -> %{id: ecto_schema.id}
@@ -34,7 +35,13 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Serializer do
         1 -> %{id: ecto_schema.id}
       end
     end
-    def partition_key(ecto_schema), do: ecto_schema.id
+
+    def partition_key(ecto_schema) do
+      pkey = ecto_schema.id # use here the best data for your needs! ...
+      unless is_string(pkey), do: raise("partition_key must be a string!") # ... it just must be a string
+      pkey
+    end
+
     def message_route(event), do: "<%= @app_name %>/<%= @schema |> Macro.underscore %>/\#{event}"
   end
   """
