@@ -94,7 +94,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
       create table(:consumer_message_indexes) do
         add :topic, :string, null: false
         add :partition, :integer, null: false
-        add :message_id, :integer, null: false
+        add :id_message, :integer, null: false
         timestamps
       end
       create index(:consumer_message_indexes, [:partition])

@@ -12,4 +12,4 @@ ESpec.configure fn(config) ->
   end
 end
 
-Ecto.Adapters.SQL.Sandbox.mode(WokAsyncMessageHandler.Repo, :manual)
+Ecto.Adapters.SQL.Sandbox.mode(WokAsyncMessageHandler.Repo, :auto)

@@ -5,7 +5,7 @@ defmodule WokAsyncMessageHandler.Helpers.Exceptions do
     title = "#{Ecto.UUID.generate} Wok Async Message Handler Exception @#{action}"
     format_for_wok(exception, event, title)
     |> Logger.error
-    throw title
+    raise title
   end
 
   def format_for_wok(exception, event, title \\ "") do

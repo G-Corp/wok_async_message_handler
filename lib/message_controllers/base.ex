@@ -17,6 +17,7 @@ defmodule BotsUnit.MessageControllers.Base do
           e -> Exceptions.throw_exception(e, event, :create)
         end
       end
+
       def destroy(event) do
         try do
           do_destroy(__MODULE__, event)
@@ -24,6 +25,7 @@ defmodule BotsUnit.MessageControllers.Base do
           e -> Exceptions.throw_exception(e, event, :destroy)
         end
       end
+
       def update(event) do
         try do
           do_update(__MODULE__, event)
@@ -60,6 +62,8 @@ defmodule BotsUnit.MessageControllers.Base do
     Record.defrecord :message_transfert, Record.extract(:message_transfert, from_lib: "wok_message_handler/include/wok_message_handler.hrl")
     alias WokAsyncMessageHandler.Models.ConsumerMessageIndex
     @indexes_ets_table :botsunit_wok_consumers_message_index
+
+    def ets_table, do: @indexes_ets_table
 
     def do_update(controller, event) do
       if message_not_already_processed?(controller, event) do
@@ -110,10 +114,6 @@ defmodule BotsUnit.MessageControllers.Base do
       Wok.Message.noreply(event)
     end
 
-    defp message_not_already_processed?(controller, event) do
-      Wok.Message.headers(event).message_id > find_last_processed_message_id(controller, event)
-    end
-
     def do_destroy(controller, event) do
       if message_not_already_processed?(controller, event) do
         {:ok, consumer_message_index} = controller.datastore.transaction(fn() ->
@@ -140,8 +140,17 @@ defmodule BotsUnit.MessageControllers.Base do
       Wok.Message.noreply(event)
     end
 
+    defp message_not_already_processed?(controller, event) do
+      Wok.Message.headers(event).message_id > find_last_processed_message_id(controller, event)
+    end
+
     defp update_consumer_message_index_ets(consumer_message_index) do
-      true = :ets.insert(@indexes_ets_table, {build_ets_key(consumer_message_index), consumer_message_index})# |> IO.inpect
+      true = :ets.insert(@indexes_ets_table, {build_ets_key(consumer_message_index), consumer_message_index})
+    end
+
+    defp get_consumer_message_index_ets(ets_key) do
+      [{^ets_key, schema}] = :ets.lookup(@indexes_ets_table, ets_key)
+      schema
     end
 
     defp update_consumer_message_index(controller, event) do
@@ -149,7 +158,7 @@ defmodule BotsUnit.MessageControllers.Base do
       partition = message_transfert(event, :partition)
       message_id = Wok.Message.headers(event).message_id
       ets_key = build_ets_key(topic, partition)
-      [{^ets_key, schema}] = :ets.lookup(@indexes_ets_table, ets_key)
+      schema = get_consumer_message_index_ets(ets_key)
       case ConsumerMessageIndex.changeset(schema, %{id_message: message_id})
            |> controller.datastore.update() do
         {:ok, updated_schema} -> updated_schema
@@ -159,25 +168,25 @@ defmodule BotsUnit.MessageControllers.Base do
       end
     end
 
-    def build_ets_key(topic, partition), do: "#{topic}_#{partition}"
-    def build_ets_key(consumer_message_index) do
+    defp build_ets_key(topic, partition), do: "#{topic}_#{partition}"
+    defp build_ets_key(consumer_message_index) do
       "#{consumer_message_index.topic}_#{consumer_message_index.partition}"
     end
 
-    def find_last_processed_message_id(controller, event) do
+    defp find_last_processed_message_id(controller, event) do
       topic = message_transfert(event, :topic)
       partition = message_transfert(event, :partition)
       ets_key = build_ets_key(topic, partition)
-      controller.datastore.one(from c in ConsumerMessageIndex, where: [topic: ^topic, partition: ^partition])
       last_processed_message_id =
         case :ets.lookup(@indexes_ets_table, ets_key) do
           [] ->
             case controller.datastore.one(from c in ConsumerMessageIndex, where: [topic: ^topic, partition: ^partition]) do
               nil ->
-                controller.datastore.insert!(%ConsumerMessageIndex{topic: topic, partition: partition, id_message: -1})
+                ecto_schema = controller.datastore.insert!(%ConsumerMessageIndex{topic: topic, partition: partition, id_message: -1})
+                update_consumer_message_index_ets(ecto_schema)
                 -1
               ecto_schema ->
-                :ets.insert(@indexes_ets_table, {ets_key, ecto_schema})
+                update_consumer_message_index_ets(ecto_schema)
                 ecto_schema.id_message
             end
           [{^ets_key, ecto_schema}] ->
@@ -186,13 +195,13 @@ defmodule BotsUnit.MessageControllers.Base do
       last_processed_message_id
     end
 
-    def attributes_from_event(event, version, atom_changeset) do
+    defp attributes_from_event(event, version, atom_changeset) do
       event
       |> expected_version_of_payload(version)
       |> map_payload_to_attributes(atom_changeset)
     end
 
-    def record_and_payload_from_event(controller, event) do
+    defp record_and_payload_from_event(controller, event) do
       payload = expected_version_of_payload(event, controller.message_version)
       case controller.datastore.get(controller.model, payload["id"]) do
         nil -> {struct(controller.model), payload}
@@ -200,7 +209,7 @@ defmodule BotsUnit.MessageControllers.Base do
       end
     end
 
-    def expected_version_of_payload(message, version) do
+    defp expected_version_of_payload(message, version) do
       Wok.Message.body(message)
       |> log_message(Wok.Message.to(message))
       |> Poison.decode!
@@ -213,7 +222,7 @@ defmodule BotsUnit.MessageControllers.Base do
       body
     end
 
-    def map_payload_to_attributes(payload, atom_changeset) do
+    defp map_payload_to_attributes(payload, atom_changeset) do
       for {key, val} <- payload, into: %{} do
         {Map.get(atom_changeset, key, String.to_atom(key)), val}
       end
