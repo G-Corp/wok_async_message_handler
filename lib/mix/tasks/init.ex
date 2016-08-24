@@ -24,6 +24,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
     create_directory(default_service)
     create_file Path.join(default_service, "wok_async_message_handler.ex"), service_template([app_module: app_module, app_name: app_name, repo: host_app_main_repo])
     create_directory(Path.join ["lib", app_name, "message_serializers"] )
+    create_directory(Path.join ["lib", app_name, "message_controllers"] )
 
     msg = "\ninit finished.
 \nAll files generated. To finish setup, add this line to your config file:
