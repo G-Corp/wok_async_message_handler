@@ -10,13 +10,7 @@ defmodule BotsUnit.MessageControllers.Base do
       def model, do: @model
       def keys_mapping, do: @keys_mapping
 
-      def create(event) do
-        try do
-          do_create(__MODULE__, event)
-        rescue
-          e -> Exceptions.throw_exception(e, event, :create)
-        end
-      end
+      def create(event), do: update(event)
 
       def destroy(event) do
         try do
@@ -80,32 +74,6 @@ defmodule BotsUnit.MessageControllers.Base do
               update_consumer_message_index(controller, event)
             {:error, ecto_changeset} ->
               Logger.warn "Unable to update #{inspect controller.model} with attributes #{inspect attributes}"
-              controller.datastore.rollback(ecto_changeset)
-          end
-        end)
-        update_consumer_message_index_ets(consumer_message_index)
-      end
-      Wok.Message.noreply(event)
-    end
-
-    def do_create(controller, event) do
-      if message_not_already_processed?(controller, event) do
-        {:ok, consumer_message_index} = controller.datastore.transaction(fn() ->
-          attributes = attributes_from_event(event, controller.message_version, controller.keys_mapping)
-                       |> controller.on_create_before_insert()
-          controller.datastore.get(controller.model, attributes.id)
-          |> case do
-            nil -> struct(controller.model)
-            ecto_schema -> ecto_schema
-          end
-          |> controller.model.create_changeset(attributes)
-          |> controller.datastore.insert_or_update()
-          |> case do
-            {:ok, ecto_schema} ->
-              {:ok, _} = controller.on_create_after_insert(ecto_schema)
-              update_consumer_message_index(controller, event)
-            {:error, ecto_changeset} ->
-              Logger.info "Unable to insert_or_update #{inspect controller.model} with attributes #{inspect attributes}"
               controller.datastore.rollback(ecto_changeset)
           end
         end)
@@ -185,7 +153,7 @@ defmodule BotsUnit.MessageControllers.Base do
               nil ->
                 ecto_schema = controller.datastore.insert!(%ConsumerMessageIndex{topic: topic, partition: partition, id_message: -1})
                 update_consumer_message_index_ets(ecto_schema)
-                -1
+                ecto_schema.id_message
               ecto_schema ->
                 update_consumer_message_index_ets(ecto_schema)
                 ecto_schema.id_message
