@@ -11,4 +11,18 @@ defmodule TestMessageController do
   end
 
   def test_callback, do: :ok
+
+  def on_update_before_update(attributes) do
+    __MODULE__.test_on_update_before_update()
+    attributes
+  end
+
+  def test_on_update_before_update, do: :ok
+
+  def on_update_after_update(ecto_schema) do
+    __MODULE__.test_on_update_after_update()
+    {:ok, ecto_schema}
+  end
+
+  def test_on_update_after_update, do: :ok
 end

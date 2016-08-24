@@ -21,4 +21,8 @@ defmodule WokAsyncMessageHandler.Models.StoppedPartition do
     |> cast(params, @accepted_params)
     |> validate_required(@required_params)
   end
+
+  def update_changeset(record, params \\ :invalid) do
+    changeset(record, params)
+  end
 end

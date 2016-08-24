@@ -180,7 +180,8 @@ defmodule BotsUnit.MessageControllers.Base do
       last_processed_message_id =
         case :ets.lookup(@indexes_ets_table, ets_key) do
           [] ->
-            case controller.datastore.one(from c in ConsumerMessageIndex, where: [topic: ^topic, partition: ^partition]) do
+            case from(c in ConsumerMessageIndex, where: [topic: ^topic, partition: ^partition])
+                 |> controller.datastore.one do
               nil ->
                 ecto_schema = controller.datastore.insert!(%ConsumerMessageIndex{topic: topic, partition: partition, id_message: -1})
                 update_consumer_message_index_ets(ecto_schema)
