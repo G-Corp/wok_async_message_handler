@@ -5,6 +5,7 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
 
       alias WokAsyncMessageHandler.Models.EctoProducerMessage
       alias WokAsyncMessageHandler.Models.StoppedPartition
+      alias WokAsyncMessageHandler.Helpers.Exceptions
 
       require Logger
       import Ecto.Query
@@ -49,8 +50,20 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
 
       @spec messages(String.t, integer, integer) :: list(tuple)
       def messages(topic, partition, number_of_messages) do
-        @datastore.all(from pm in EctoProducerMessage, limit: ^number_of_messages, where: pm.topic == ^topic and pm.partition == ^partition, order_by: pm.id)
-        |> Enum.map(fn(message) -> {message.id, topic, partition, message.blob} end)
+        try do
+          @datastore.all(from pm in EctoProducerMessage, limit: ^number_of_messages, where: pm.topic == ^topic and pm.partition == ^partition, order_by: pm.id)
+          |> Enum.map(fn(message) -> {message.id, topic, partition, message.blob} end)
+        rescue
+          e ->
+            Exceptions.throw_exception(
+              e, 
+              %{topic: topic, partition: partition, number_of_messages: number_of_messages}, 
+              :messages, 
+              false
+            )
+            :timer.sleep(1000) # to prevent DB spamming in case of troubles
+            []
+        end
       end
 
       @spec response(integer, term, boolean) :: :next | :exit | :retry

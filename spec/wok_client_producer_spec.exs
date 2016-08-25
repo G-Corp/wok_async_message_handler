@@ -5,6 +5,7 @@ defmodule BotsUnit.MessagesProducers.EctoSpec do
   alias WokAsyncMessageHandler.Models.EctoProducerMessage
   alias WokAsyncMessageHandler.DummyProducer, as: MessageProducer
   alias WokAsyncMessageHandler.Models.StoppedPartition
+  alias WokAsyncMessageHandler.Helpers.Exceptions
 
   describe "#create_and_add_rt_notification_to_message_queue" do
     before do: allow(:kafe).to accept(:partitions, fn(_) -> [0, 1, 2] end)
@@ -76,9 +77,21 @@ defmodule BotsUnit.MessagesProducers.EctoSpec do
     let! :message1, do: Repo.insert!(%EctoProducerMessage{topic: "topic_1", partition: 1, blob: "blob1", inserted_at: t, updated_at: t})
     let! :message2, do: Repo.insert!(%EctoProducerMessage{topic: "topic_2", partition: 1, blob: "blob2", inserted_at: t, updated_at: t})
     let! :message3, do: Repo.insert!(%EctoProducerMessage{topic: "topic_1", partition: 1, blob: "blob3", inserted_at: t, updated_at: t})
-    it do: expect(MessageProducer.messages "topic_1", 1, 1).to eq([{message1.id, "topic_1", 1, "blob1"}])
-    it do: expect(MessageProducer.messages "topic_2", 1, 1000).to eq([{message2.id, "topic_2", 1, "blob2"}])
-    it do: expect(MessageProducer.messages "topic_1", 1, 2).to eq([{message1.id, "topic_1", 1, "blob1"}, {message3.id, "topic_1", 1, "blob3"}])
+
+    context "when message fetch is ok" do
+      it do: expect(MessageProducer.messages "topic_1", 1, 1).to eq([{message1.id, "topic_1", 1, "blob1"}])
+      it do: expect(MessageProducer.messages "topic_2", 1, 1000).to eq([{message2.id, "topic_2", 1, "blob2"}])
+      it do: expect(MessageProducer.messages "topic_1", 1, 2).to eq([{message1.id, "topic_1", 1, "blob1"}, {message3.id, "topic_1", 1, "blob3"}])
+    end
+
+    context "when fetch is not ok" do
+      before do: allow(Repo).to accept(:all, fn(_) -> raise "error" end)
+      before do: allow(Exceptions).to accept(:throw_exception, 
+        fn(exception, data, :messages, false) -> passthrough([exception, data, :messages, false]) end
+      )
+      it do: expect(MessageProducer.messages "topic_987", 12, 34).to eq([])
+      xit do: expect(Exceptions).to accepted(:throw_exception, :any, count: 1) #spy does not work with macro ???
+    end
   end
 
   describe "#response" do
