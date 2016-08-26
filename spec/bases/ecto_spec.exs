@@ -1,44 +1,13 @@
-defmodule BotsUnit.MessagesProducers.EctoSpec do
+defmodule BotsUnit.Spec.Bases.EctoSpec do
   use ESpec
 
-  alias WokAsyncMessageHandler.Repo
+  alias WokAsyncMessageHandler.Spec.Repo
   alias WokAsyncMessageHandler.Models.EctoProducerMessage
-  alias WokAsyncMessageHandler.DummyProducer, as: MessageProducer
+  alias WokAsyncMessageHandler.Spec.Bases.DummyProducer, as: MessageProducer
   alias WokAsyncMessageHandler.Models.StoppedPartition
   alias WokAsyncMessageHandler.Helpers.Exceptions
 
-  describe "#create_and_add_rt_notification_to_message_queue" do
-    before do: allow(:kafe).to accept(:partitions, fn(_) -> [0, 1, 2] end)
-    context "when no error" do
-      before do
-        allow(Repo).to accept(:insert, fn(ecto_schema) -> {:ok, ecto_schema} end )
-        {:ok, message} = MessageProducer.create_and_add_rt_notification_to_message_queue(%{session_id: "my_session_id"})
-        {:shared, message: message}
-      end
-      it do: expect(Repo).to accepted(:insert, :any, count: 1)
-      it do: expect(shared.message.partition).to eq(1)
-      it do: expect(shared.message.topic).to eq("realtime_topic")
-      it do: expect(shared.message.blob).to eq(Wok.Message.encode_message(
-              {"realtime_topic", "my_session_id"},
-              "from_bot",
-              "from_bot/real_time/notify",
-              "[{\"version\":1,\"payload\":{\"source\":\"from_bot\",\"session_id\":\"my_session_id\"}}]")
-              |> elem(3)
-            )
-    end
-
-    context "when storage error" do
-      before do: allow(Repo).to accept(:insert, fn(_ecto_schema) -> {:error, "storage error"} end )
-      it do: {:error, "storage error"} = MessageProducer.create_and_add_rt_notification_to_message_queue(%{session_id: "my_session_id"})
-    end
-
-    context "when wok message error" do
-      before do: allow(Wok.Message).to accept(:encode_message, fn(_, _, _, _) -> {:error, "wok message error"} end )
-      it do: {:error, "wok message error"} = MessageProducer.create_and_add_rt_notification_to_message_queue(%{session_id: "my_session_id"})
-    end
-  end
-
-  describe "#create_and_add_message_to_message_queue" do
+  describe "#build_and_store_message" do
     let :ecto_schema, do: %{__struct__: TestEctoSchema, id: "fake_id"}
     before do
       allow(:kafe).to accept(:partitions, fn(_) -> [0, 1] end)
@@ -46,7 +15,7 @@ defmodule BotsUnit.MessagesProducers.EctoSpec do
     context "when no error" do
       before do
         allow(Repo).to accept(:insert, fn(ecto_schema) -> {:ok, ecto_schema} end )
-        {:ok, message} = MessageProducer.create_and_add_message_to_message_queue(ecto_schema, :created, "my_topic")
+        {:ok, message} = MessageProducer.build_and_store_message({"my_topic", "fake_id"}, "from_bot", "bot/resource/created", %{id: "fake_id"})
         {:shared, message: message}
       end
      it do: expect(Repo).to accepted(:insert, :any, count: 1)
@@ -56,19 +25,19 @@ defmodule BotsUnit.MessagesProducers.EctoSpec do
       {"my_topic", "fake_id"},
       "from_bot",
       "bot/resource/created",
-      "[{\"version\":1,\"payload\":{\"id\":\"fake_id\"}}]")
+      "{\"id\":\"fake_id\"}")
      |> elem(3)
      )
     end
 
     context "when storage error" do
       before do: allow(Repo).to accept(:insert, fn(_ecto_schema) -> {:error, "storage error"} end )
-      it do: {:error, "storage error"} = MessageProducer.create_and_add_message_to_message_queue(ecto_schema, :created, "my_topic")
+      it do: {:error, "storage error"} = MessageProducer.build_and_store_message({"my_topic", "fake_id"}, "from_bot", "bot/resource/created", %{id: "fake_id"})
     end
 
     context "when wok message error" do
       before do: allow(Wok.Message).to accept(:encode_message, fn(_, _, _, _) -> {:error, "wok message error"} end )
-      it do: {:error, "wok message error"} = MessageProducer.create_and_add_message_to_message_queue(ecto_schema, :created, "my_topic")
+      it do: {:error, "wok message error"} = MessageProducer.build_and_store_message({"my_topic", "fake_id"}, "from_bot", "bot/resource/created", %{id: "fake_id"})
     end
   end
 

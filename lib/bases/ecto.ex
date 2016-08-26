@@ -10,27 +10,23 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
       require Logger
       import Ecto.Query
 
+      def realtime_topic, do: @realtime_topic
+      def producer_name, do: @producer_name
+
       @spec create_and_add_rt_notification_to_message_queue(map) :: {:ok, EctoProducerMessage.t} | {:error, term}
-      def create_and_add_rt_notification_to_message_queue(to) do
-        message = [%{version: 1, payload: Map.merge(%{source: @producer_name}, to)}]
-        topic_partition = {@realtime_topic, Map.values(to) |> List.first}
-        from = @producer_name
-        to = "#{@producer_name}/real_time/notify"
-        build_and_store_message(topic_partition, from, to, message)
+      def create_and_add_rt_notification_to_message_queue(data, options \\ %{}) do
+        Logger.info "WokAsyncMessageHandler.Bases.Ecto.create_and_add_rt_notification_to_message_queue/2 is deprecated. Use WokAsyncMessageHandler.Helpers.RealTimeMessage.build_and_store/3 instead."
+        WokAsyncMessageHandler.Helpers.RealTimeMessage.build_and_store(__MODULE__, data, options)
       end
 
       @spec create_and_add_message_to_message_queue(Ecto.Schema.t, :atom, String.t) :: {:ok, EctoProducerMessage.t} | {:error, term}
       def create_and_add_message_to_message_queue(ecto_schema, event, topic) do
-        serializer = schema_serializer(ecto_schema)
-        message = build_message(ecto_schema, event, serializer)
-        topic_partition = {topic, serializer.partition_key(ecto_schema)}
-        from = @producer_name
-        to = serializer.message_route(event)
-        build_and_store_message(topic_partition, from, to, message)
+        Logger.info "WokAsyncMessageHandler.Bases.Ecto.create_and_add_message_to_message_queue/3 is deprecated. Use WokAsyncMessageHandler.Helpers.Message.build_and_store/4 instead."
+        WokAsyncMessageHandler.Helpers.Messages.build_and_store(__MODULE__, ecto_schema, event, topic)
       end
 
       @spec build_and_store_message(term, String.t, String.t, map)  :: {:ok, Ecto.Schema.t} | {:error, Ecto.Changeset.t} | {:error, term}
-      defp build_and_store_message(topic_partition, from, to, message) do
+      def build_and_store_message(topic_partition, from, to, message) do
         case Wok.Message.encode_message(topic_partition, from, to, message |> Poison.encode!) do
           {:ok, topic, partition, encoded_message} ->
             @datastore.insert(%EctoProducerMessage{topic: topic, partition: partition, blob: encoded_message})
@@ -39,7 +35,7 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
       end
 
       @spec build_message(Ecto.Schema.t, :atom, module) :: map()
-      defp build_message(ecto_schema, event, serializer) do
+      def build_message(ecto_schema, event, serializer) do
         Enum.map(serializer.message_versions, fn(version) ->
           %{
               payload: apply(serializer, event, [ecto_schema, version]),
@@ -107,7 +103,7 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
       def log_warning(message), do: Logger.warn(message)
 
       @spec schema_serializer(Ecto.Schema.t) :: module
-      defp schema_serializer(schema) do
+      def schema_serializer(schema) do
         schema_str = schema.__struct__
                     |> to_string
                     |> String.split(".")

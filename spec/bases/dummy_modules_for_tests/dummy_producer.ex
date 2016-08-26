@@ -1,4 +1,4 @@
-defmodule WokAsyncMessageHandler.DummyProducer do
+defmodule WokAsyncMessageHandler.Spec.Bases.DummyProducer do
   defmodule Serializers.TestEctoSchema do
     def message_versions, do: [1]
     def created(ecto_schema, _version), do: %{id: ecto_schema.id}
@@ -7,9 +7,9 @@ defmodule WokAsyncMessageHandler.DummyProducer do
   end
 
   @application :wok_async_message_handler
-  @datastore WokAsyncMessageHandler.Repo
+  @datastore WokAsyncMessageHandler.Spec.Repo
   @producer_name "from_bot"
   @realtime_topic "realtime_topic"
-  @serializers WokAsyncMessageHandler.DummyProducer.Serializers
+  @serializers WokAsyncMessageHandler.Spec.Bases.DummyProducer.Serializers
   use WokAsyncMessageHandler.Bases.Ecto
 end

@@ -1,6 +1,6 @@
 defmodule WokAsyncMessageHandler.MessageControllers.BaseSpec do
   use ESpec, async: false
-  alias WokAsyncMessageHandler.Repo
+  alias WokAsyncMessageHandler.Spec.Repo
   alias WokAsyncMessageHandler.Models.ConsumerMessageIndex
   alias WokAsyncMessageHandler.Models.StoppedPartition
 

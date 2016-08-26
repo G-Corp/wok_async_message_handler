@@ -1,6 +1,6 @@
 defmodule TestMessageController do
   @message_version 1
-  @datastore WokAsyncMessageHandler.Repo
+  @datastore WokAsyncMessageHandler.Spec.Repo
   @model WokAsyncMessageHandler.Models.StoppedPartition #just for test, to not generate a new model
   @keys_mapping %{"field_to_remap" => :error}
   use BotsUnit.MessageControllers.Base

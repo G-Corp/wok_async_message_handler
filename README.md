@@ -126,6 +126,8 @@ the 'to' field in your message.
 
 ## create_and_add_rt_notification_to_message_queue/1
 
+### this method is deprecated. Use WokAsyncMessageHandler.Helpers.RealTimeMessage.build_and_store/3 instead
+
 This method sends a realtime message. **This is an opinionated method.**  
 It just generates a message in queue table to "#{@producer_name}/real_time/notify" (@producer_name defined in your handler when you run the "init")  
 If it doesn't fit your needs, rewrite a method in your handler.  
@@ -141,3 +143,60 @@ create_and_add_rt_notification_to_message_queue(%{session_id: my_session_id})
 The whole map will be merged into message :payload value with the %{source: @producer_name} map.  
 IE, create_and_add_rt_notification_to_message_queue(%{session_id: my_session_id}) will have a payload field with %{session_id: my_session_id, source: @producer_name}  
 Since a merge in elixir reorders map in alpabetical order, pay attention to the partition key (first value of the map).  
+
+This method accept an options (map) as second param. You can add these fields in this map:
+* ```:pkey``` : atom, let you specify which key from the first map you want to use get the value for partition key.  
+* ```:from``` : string, let you specify a custom ```from``` for the message.  
+* ```:to``` : string, let you specify a custom ```to``` for the message.  
+
+## helpers
+
+### WokAsyncMessageHandler.Helpers.RealTimeMessage
+
+* build_and_store/3  
+Use this method when you want to send realtime messages.  
+It will build and store the message to send in your database with these default fields:
+* topic: @realtime_topic value from handler
+* partition_key: THE FIRST VALUE of the data map (see below for more info)
+* from: producer_name value of handler
+* to: "#{handler.producer_name}/real_time/notify"  
+
+The message will be then send later by the producer.  
+
+You can redefine defaul fields if you need:
+```
+WokAsyncMessageHandler.Helpers.RealTimeMessage.build_and_store(
+  MyApp.Services.WokAsyncMessageHandler,  # message handler to use to build and store message
+  %{data1: value1, data2: value2...}, # a map where you specify your payload's data
+  %{pkey: :data2, from: "my_from", to: "my_custom_to"} #optionnal and each key is optionnal too
+)
+```
+Since a merge in elixir reorders map in alpabetical order, pay attention to the partition key (first value of the map) if you don't redefine it in the second map.  
+
+THIS METHOD DOESN'T HANDLE VERSIONING OF RT MESSAGES FOR NOW.  
+
+Example: If you need to send messages to a session_id, call :
+```
+WokAsyncMessageHandler.Helpers.RealTimeMessage.build_and_store(%{session_id: my_session_id})
+```
+The whole map will be merged into message :payload value. If you don't specify a "source" field, it will be added to your payload with @producer_name as value.  
+IE, ```build_and_store(%{session_id: my_session_id})``` will have a payload field with ```%{session_id: my_session_id, source: @producer_name}```  
+
+This method accept an options (map) as second param. You can add these fields in this map:
+* ```:pkey``` : atom, let you specify which key from the first map you want to use get the value for partition key.  
+* ```:from``` : string, let you specify a custom ```from``` for the message.  
+* ```:to``` : string, let you specify a custom ```to``` for the message.  
+
+### WokAsyncMessageHandler.Helpers.Messages
+
+* build_and_store/4  
+
+```
+WokAsyncMessageHandler.Helpers.Messages.build_and_store(
+  MyApp.Services.WokAsyncMessageHandler,  # message handler to use to build and store message
+  ecto_schema,  # your data / model / ecto_schema
+  event, # the event you want to produce. Usually :created | :updated | :destroyed
+  topic, # topic where you want to send the message
+```
+Use this method when you want to send a message/event in your broker.  
+It will build and store the message  in your database with the parameters defined in the handler.  
