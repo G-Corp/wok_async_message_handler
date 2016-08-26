@@ -91,18 +91,29 @@ mix wok_async_message_handler.controller --schema MyAppEctoSchema
 ```
 Don't forget to use mix and ecto to generate a schema and a migration file for this resource.  
 Go to created file and edit it as you need.  
-You just then need to map your wok handlers config to your controller and it will start consuming messages.  
-This consumer will understand : "created", "destroyed" and "updated" events.  
-You can use hooks in your controller (just redefine the method in your controller) :  
-* on_destroy_before_delete(extracted_attributes_from_event_payload_as_map)  
-* on_destroy_after_delete(deleted_ecto_schema)  
-* on_update_before_update(extracted_attributes_from_event_payload_as_map)  
-* on_update_after_update(updated_ecto_schema)  
+After that, you need to map your wok handlers config to your controller and it will start consuming messages.  
+By default, this consumer will consume : "created", "destroyed" and "updated" events.  
+If you want you can add method in your controller to handle cutom events.  
 
-("create" is just an alias for "update" for now)  
+
+You can use hooks in your controller. Just redefine these methods in your controller:  
+
+* ```def on_update_before_update(attributes), do: attributes```
+* ```def on_update_after_update(ecto_schema), do: {:ok, ecto_schema}```
+* ```def on_destroy_before_delete(attributes), do: attributes```
+* ```def on_destroy_after_delete(ecto_schema), do: {:ok, ecto_schema}```
+
+**before** are called before the database update/delete and take the payload from the event as map.  
+It returns a map used as the schema data for sql query.  
+(The default hook as you can see returns just what's inside the payload = it does nothing)  
+**after** are called just after the database update/delete and take the ecto schema returned by the query call as argument.  
+It returns {:ok, ecto_schema}. If something else is returned, the transaction is canceled and the consumer will stop consuming 
+this partition. It will be recorded in ```stopped_partitions``` table.
+
+"created" code in mpdule is just an alias of "updated" for now.  
 
 Finally, you can rewrite create/1, update/1, destroy/1 if you need to have some specific functions.  
-Theses methods just take the row "event" and must return ```Wok.Message.no_reply().```  
+Theses methods just take the row "event" and must return ```Wok.Message.no_reply()```  
 
 ## serializers
 
