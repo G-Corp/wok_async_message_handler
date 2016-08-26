@@ -1,8 +1,8 @@
-defmodule BotsUnit.MessageControllers.Base do
+defmodule WokAsyncMessageHandler.MessageControllers.Base do
   defmacro __using__(_options) do
 
     quote do
-      import BotsUnit.MessageControllers.Base.Helpers
+      import WokAsyncMessageHandler.MessageControllers.Base.Helpers
       alias WokAsyncMessageHandler.Helpers.Exceptions
 
       def message_version, do: @message_version

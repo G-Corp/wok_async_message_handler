@@ -3,7 +3,7 @@ defmodule TestMessageController do
   @datastore WokAsyncMessageHandler.Spec.Repo
   @model WokAsyncMessageHandler.Models.StoppedPartition #just for test, to not generate a new model
   @keys_mapping %{"field_to_remap" => :error}
-  use BotsUnit.MessageControllers.Base
+  use WokAsyncMessageHandler.MessageControllers.Base
 
   def on_destroy_after_delete(ecto_schema) do
     __MODULE__.test_callback()

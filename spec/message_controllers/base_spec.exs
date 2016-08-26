@@ -3,10 +3,11 @@ defmodule WokAsyncMessageHandler.MessageControllers.BaseSpec do
   alias WokAsyncMessageHandler.Spec.Repo
   alias WokAsyncMessageHandler.Models.ConsumerMessageIndex
   alias WokAsyncMessageHandler.Models.StoppedPartition
+  alias WokAsyncMessageHandler.MessageControllers.Base.Helpers
 
   before do
-    if( :ets.info(BotsUnit.MessageControllers.Base.Helpers.ets_table) == :undefined ) do
-      :ets.new(BotsUnit.MessageControllers.Base.Helpers.ets_table, [:set, :public, :named_table])
+    if( :ets.info(Helpers.ets_table) == :undefined ) do
+      :ets.new(Helpers.ets_table, [:set, :public, :named_table])
     end
   end
 

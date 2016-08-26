@@ -15,8 +15,8 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
 
       @spec create_and_add_rt_notification_to_message_queue(map) :: {:ok, EctoProducerMessage.t} | {:error, term}
       def create_and_add_rt_notification_to_message_queue(data, options \\ %{}) do
-        Logger.info "WokAsyncMessageHandler.Bases.Ecto.create_and_add_rt_notification_to_message_queue/2 is deprecated. Use WokAsyncMessageHandler.Helpers.RealTimeMessage.build_and_store/3 instead."
-        WokAsyncMessageHandler.Helpers.RealTimeMessage.build_and_store(__MODULE__, data, options)
+        Logger.info "WokAsyncMessageHandler.Bases.Ecto.create_and_add_rt_notification_to_message_queue/2 is deprecated. Use WokAsyncMessageHandler.Helpers.RealTimeMessages.build_and_store/3 instead."
+        WokAsyncMessageHandler.Helpers.RealTimeMessages.build_and_store(__MODULE__, data, options)
       end
 
       @spec create_and_add_message_to_message_queue(Ecto.Schema.t, :atom, String.t) :: {:ok, EctoProducerMessage.t} | {:error, term}

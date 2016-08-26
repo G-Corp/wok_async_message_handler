@@ -1,4 +1,4 @@
-defmodule BotsUnit.Spec.Helpers.MessagesSpec do
+defmodule WokAsyncMessageHandler.Spec.Helpers.MessagesSpec do
   use ESpec
 
   alias WokAsyncMessageHandler.Spec.Bases.DummyProducer, as: MessageProducer

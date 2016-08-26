@@ -1,8 +1,8 @@
-defmodule BotsUnit.Spec.Helpers.RealTimeMessageSpec do
+defmodule WokAsyncMessageHandler.Spec.Helpers.RealTimeMessagesSpec do
   use ESpec
 
   alias WokAsyncMessageHandler.Spec.Bases.DummyProducer, as: MessageProducer
-  alias WokAsyncMessageHandler.Helpers.RealTimeMessage
+  alias WokAsyncMessageHandler.Helpers.RealTimeMessages
 
   describe "#build_and_store" do
     before do: allow(:kafe).to accept(:partitions, fn(_) -> [0, 1, 2] end)
@@ -16,7 +16,7 @@ defmodule BotsUnit.Spec.Helpers.RealTimeMessageSpec do
     context "without options" do
       context "when no error" do
         before do
-          {:ok, message} = RealTimeMessage.build_and_store(MessageProducer, %{session_id: "my_session_id"})
+          {:ok, message} = RealTimeMessages.build_and_store(MessageProducer, %{session_id: "my_session_id"})
           {:shared, message: message}
         end
         it do: expect(MessageProducer).to accepted(
@@ -33,13 +33,13 @@ defmodule BotsUnit.Spec.Helpers.RealTimeMessageSpec do
   
       context "when error" do
         before do: allow(MessageProducer).to accept(:build_and_store_message, fn(_, _, _, _) -> {:error, "error"} end )
-        it do: {:error, "error"} = RealTimeMessage.build_and_store(MessageProducer, %{session_id: "my_session_id"})
+        it do: {:error, "error"} = RealTimeMessages.build_and_store(MessageProducer, %{session_id: "my_session_id"})
       end
     end
 
     context "with options" do
       before do
-        {:ok, message} = RealTimeMessage.build_and_store(
+        {:ok, message} = RealTimeMessages.build_and_store(
           MessageProducer, 
           %{session_id: "my_session_id", data_for_pkey: "123", source: "my_source"},
           %{pkey: :data_for_pkey, from: "my_from", to: "my_to"}

@@ -137,7 +137,7 @@ the 'to' field in your message.
 
 ## create_and_add_rt_notification_to_message_queue/1
 
-### this method is deprecated. Use WokAsyncMessageHandler.Helpers.RealTimeMessage.build_and_store/3 instead
+### this method is deprecated. Use WokAsyncMessageHandler.Helpers.RealTimeMessages.build_and_store/3 instead
 
 This method sends a realtime message. **This is an opinionated method.**  
 It just generates a message in queue table to "#{@producer_name}/real_time/notify" (@producer_name defined in your handler when you run the "init")  
@@ -162,7 +162,7 @@ This method accept an options (map) as second param. You can add these fields in
 
 ## helpers
 
-### WokAsyncMessageHandler.Helpers.RealTimeMessage
+### WokAsyncMessageHandler.Helpers.RealTimeMessages
 
 * build_and_store/3  
 Use this method when you want to send realtime messages.  
@@ -176,7 +176,7 @@ The message will be then send later by the producer.
 
 You can redefine defaul fields if you need:
 ```
-WokAsyncMessageHandler.Helpers.RealTimeMessage.build_and_store(
+WokAsyncMessageHandler.Helpers.RealTimeMessages.build_and_store(
   MyApp.Services.WokAsyncMessageHandler,  # message handler to use to build and store message
   %{data1: value1, data2: value2...}, # a map where you specify your payload's data
   %{pkey: :data2, from: "my_from", to: "my_custom_to"} #optionnal and each key is optionnal too
@@ -188,7 +188,7 @@ THIS METHOD DOESN'T HANDLE VERSIONING OF RT MESSAGES FOR NOW.
 
 Example: If you need to send messages to a session_id, call :
 ```
-WokAsyncMessageHandler.Helpers.RealTimeMessage.build_and_store(%{session_id: my_session_id})
+WokAsyncMessageHandler.Helpers.RealTimeMessages.build_and_store(%{session_id: my_session_id})
 ```
 The whole map will be merged into message :payload value. If you don't specify a "source" field, it will be added to your payload with @producer_name as value.  
 IE, ```build_and_store(%{session_id: my_session_id})``` will have a payload field with ```%{session_id: my_session_id, source: @producer_name}```  

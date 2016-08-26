@@ -1,4 +1,4 @@
-defmodule WokAsyncMessageHandler.Helpers.RealTimeMessage do
+defmodule WokAsyncMessageHandler.Helpers.RealTimeMessages do
 
   @spec build_and_store(module, map, map) :: {:ok, EctoProducerMessage.t} | {:error, term}
   def build_and_store(handler, data, options \\ %{}) do
