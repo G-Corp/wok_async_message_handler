@@ -18,7 +18,7 @@ It's an "at least once message dispatch, at least once message delivered and exa
 
 The **WokAsyncMessageHandler.MessageControllers.Base** module allows to define messages controllers in your application to consume messages.  
 Thanks to message_id header, it prevents to process multiple times the same message.  
-It natively consume ```created``` (new record in db), ```updated``` (insert or update a record in db) and ```destroyed``` (delete a record from db) event.  
+It natively consumes ```created``` (new record in db), ```updated``` (insert or update a record in db) and ```destroyed``` (delete a record from db) event.  
 Look below for more information about it.  
 
 ## Installation
@@ -60,12 +60,10 @@ Edit the generated serializer to add fields to serialization methods and customi
 
 and now you can call functions in your code (be sure to add them always in a SQL transaction):
 ```
-{:ok, message} = MyApp.Services.WokAsyncMessageHandler
-                 .create_and_add_rt_notification_to_message_queue(%{session_id: "my_session_id"})
+{:ok, message} = WokAsyncMessageHandler.Helpers.RealTimeMessages.build_and_store(MyApp.Services.WokAsyncMessageHandler, %{session_id: "my_session_id"})
 ...
 my_app_ecto_schema = MyApp.Datastores.PG.get(MyApp.MyAppEctoSchema, 1)
-{:ok, message} = MyApp.Services.WokAsyncMessageHandler
-                 .create_and_add_message_to_message_queue(my_app_ecto_schema, :created, "my_topic")
+{:ok, message} = WokAsyncMessageHandler.Helpers.Messages.build_and_store(MyApp.Services.WokAsyncMessageHandler, my_app_ecto_schema, :created, "my_topic")
 ```
 
 ## test
@@ -110,29 +108,32 @@ It returns a map used as the schema data for sql query.
 It returns {:ok, ecto_schema}. If something else is returned, the transaction is canceled and the consumer will stop consuming 
 this partition. It will be recorded in ```stopped_partitions``` table.
 
-"created" code in mpdule is just an alias of "updated" for now.  
+"created" code in module is just an alias of "updated" for now.  
 
-Finally, you can rewrite create/1, update/1, destroy/1 if you need to have some specific functions.  
+You can rewrite create/1, update/1, destroy/1 if you need to have specific code for your application.  
 Theses methods just take the row "event" and must return ```Wok.Message.no_reply()```  
+```def create(event), do: ...[your code]... Wok.Message.no_reply()```  
+```def destroy(event), do: ...[your code]... Wok.Message.no_reply()```  
+```def update(event), do: ...[your code]... Wok.Message.no_reply()```  
 
 ## serializers
 
 A serializer has multiple functions :
-- **message_versions** : returns the list of supported messages serialization versions.  
+- **message_versions/0** : returns the list of supported messages serialization versions.  
 You should not have more than 2 (or exceptionnaly 3) supported versions.  
 When you want to generate a message, the handler will serialize all versions, using the serialization method for the event.  
 
-- **created|updated|destroyed|[your event]** :  
+- **created|updated|destroyed|[your event]/2** :  
 serialization methods for events.
 It takes two params (your ecto schema with data, and a version).  
 You just need to define the map to return for json serialization.  
 
-- **partition_key** :
+- **partition_key/1** :
 THIS MUST RETURN A STRING.  
 Returns the partition key for kafka. Often your ID or MASTER_ID.  
 If you return an integer, it will be send to this partition number, but this behavior is not wanted here.  
 
-- **message_route** :
+- **message_route/1** :
 the 'to' field in your message.  
 
 ## create_and_add_rt_notification_to_message_queue/1
@@ -193,7 +194,7 @@ WokAsyncMessageHandler.Helpers.RealTimeMessages.build_and_store(%{session_id: my
 The whole map will be merged into message :payload value. If you don't specify a "source" field, it will be added to your payload with @producer_name as value.  
 IE, ```build_and_store(%{session_id: my_session_id})``` will have a payload field with ```%{session_id: my_session_id, source: @producer_name}```  
 
-This method accept an options (map) as second param. You can add these fields in this map:
+This method accepts an options (map) as second param. You can add these fields in this map:
 * ```:pkey``` : atom, let you specify which key from the first map you want to use get the value for partition key.  
 * ```:from``` : string, let you specify a custom ```from``` for the message.  
 * ```:to``` : string, let you specify a custom ```to``` for the message.  
