@@ -26,10 +26,16 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
     create_directory(Path.join ["lib", app_name, "message_serializers"] )
     create_directory(Path.join ["lib", app_name, "message_controllers"] )
 
-    msg = "\ninit finished.
-\nAll files generated. To finish setup, add this line to your config file:
-\n\nconfig :wok, producer: [handler: #{app_module}.Services.WokAsyncMessageHandler, frequency: 100, number_of_messages: 1000]
-\n\nlib/services/wok_async_message_handler.ex is a default message handler generated for you (YOU NEED TO PARAMETER THIS!!!!! DON'T FORGET TO LOOK AT IT!)\n\n"
+    msg = "
+WokAsyncMessageHandler initialized.
+
+All files generated. To finish setup, add this line to your config file:
+config :wok, producer: [handler: #{app_module}.Services.WokAsyncMessageHandler, frequency: 100, number_of_messages: 1000]
+
+lib/#{app_name}/services/wok_async_message_handler.ex is a default message handler generated for you (YOU NEED TO PARAMETER THIS!!!!! DON'T FORGET TO LOOK AT IT!)
+
+
+"
     Mix.shell.info [msg]
   end
 
