@@ -16,9 +16,9 @@ When a message is registered, its id (autoincremented column by PG, send in wok 
 lets your consumers, when they receive the message, know if they already have processed this message.  
 It's an "at least once message dispatch, at least once message delivered and exactly once message processed" flow.  
 
-The **BotsUnit.MessageControllers.Base** module allows to define messages controller in your application to consume messages.  
-It handles multiple messages consuming preventing to process the message message multiple times with the message_id header.  
-It natively understand created, updated and destroyed event.  
+The **WokAsyncMessageHandler.MessageControllers.Base** module allows to define messages controllers in your application to consume messages.  
+Thanks to message_id header, it prevents to process multiple times the same message.  
+It natively consume ```created``` (new record in db), ```updated``` (insert or update a record in db) and ```destroyed``` (delete a record from db) event.  
 Look below for more information about it.  
 
 ## Installation

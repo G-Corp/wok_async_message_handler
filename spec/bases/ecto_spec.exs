@@ -1,4 +1,4 @@
-defmodule BotsUnit.Spec.Bases.EctoSpec do
+defmodule WokAsyncMessageHandler.Spec.Bases.EctoSpec do
   use ESpec
 
   alias WokAsyncMessageHandler.Spec.Repo
@@ -77,13 +77,13 @@ defmodule BotsUnit.Spec.Bases.EctoSpec do
     context "when message is sent without error but db delete does not work" do
       before do
         allow(Repo).to accept(:delete, fn(_) -> {:error, "my error"} end)
-        allow(BotsUnit.MessagesProducers.TestMessageProducer).to accept(:log_warning, fn(_message) -> nil end)
+        allow(WokAsyncMessageHandler.MessagesProducers.TestMessageProducer).to accept(:log_warning, fn(_message) -> nil end)
         {:shared, result: MessageProducer.response(message.id, {:ok, :tuple}, true) }
       end
       it do: expect( shared.result ).to eq(:exit)
-      xit do: expect( BotsUnit.MessagesProducers.TestMessageProducer ).to accepted(:log_warning, :any, count: 1)
+      xit do: expect( WokAsyncMessageHandler.MessagesProducers.TestMessageProducer ).to accepted(:log_warning, :any, count: 1)
       it do: expect( StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
-             .to eq(%{topic: "topic", partition: 1, message_id: message.id, error: "BotsUnit.MessagesProducers.Ecto unable to delete row #{message.id}\n\"my error\"\nproducer exited."})
+             .to eq(%{topic: "topic", partition: 1, message_id: message.id, error: "WokAsyncMessageHandler.MessagesProducers.Ecto unable to delete row #{message.id}\n\"my error\"\nproducer exited."})
     end
 
     context "when message is not sent" do
@@ -95,7 +95,7 @@ defmodule BotsUnit.Spec.Bases.EctoSpec do
       it do: expect( shared.result ).to eq(:exit)
       xit do: expect( MessageProducer ).to accepted(:log_warning, :any, count: 1)
       it do: expect( StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
-            .to eq(%{topic: "topic2", partition: 3, message_id: message.id, error: "BotsUnit.MessagesProducers.Ecto error while sending message #{message.id}\n\"an error\"\nproducer exited."})
+            .to eq(%{topic: "topic2", partition: 3, message_id: message.id, error: "WokAsyncMessageHandler.MessagesProducers.Ecto error while sending message #{message.id}\n\"an error\"\nproducer exited."})
     end
 
     context "when a middleware stop message sending" do
@@ -107,7 +107,7 @@ defmodule BotsUnit.Spec.Bases.EctoSpec do
       it do: expect( shared.result ).to eq(:exit)
       xit do: expect( MessageProducer ).to accepted(:log_warning, :any, count: 1)
       it do: expect( StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
-            .to eq(%{topic: "topic23", partition: 5, message_id: message.id, error: "BotsUnit.MessagesProducers.Ecto message #{message.id} delivery stopped by middleware middleware\n\"middle_error\"\nproducer exited."})
+            .to eq(%{topic: "topic23", partition: 5, message_id: message.id, error: "WokAsyncMessageHandler.MessagesProducers.Ecto message #{message.id} delivery stopped by middleware middleware\n\"middle_error\"\nproducer exited."})
     end
   end
 end

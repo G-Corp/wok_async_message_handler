@@ -25,7 +25,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Controller do
     @datastore <%= @repo %> # repo for your resource
     @model <%= @schema %> # Resource you will receive messages for
     @keys_mapping %{} # Map to remap fields name between messages and your db schema : %{"a" -> :b} will remap "a" found in your message to attribute :b. It's always "string" to "atom".
-    use BotsUnit.MessageControllers.Base
+    use WokAsyncMessageHandler.MessageControllers.Base
   end
   """
 end

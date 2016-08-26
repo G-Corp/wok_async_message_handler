@@ -73,10 +73,10 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
           {:ok, _} ->
             delete_row(message_id)
           {:error, error} ->
-            stop_partition(message_id, "BotsUnit.MessagesProducers.Ecto error while sending message #{message_id}\n#{inspect error}\nproducer exited.")
+            stop_partition(message_id, "WokAsyncMessageHandler.MessagesProducers.Ecto error while sending message #{message_id}\n#{inspect error}\nproducer exited.")
             :exit
           {:stop, middleware, error} ->
-            stop_partition(message_id, "BotsUnit.MessagesProducers.Ecto message #{message_id} delivery stopped by middleware #{middleware}\n#{inspect error}\nproducer exited.")
+            stop_partition(message_id, "WokAsyncMessageHandler.MessagesProducers.Ecto message #{message_id} delivery stopped by middleware #{middleware}\n#{inspect error}\nproducer exited.")
             :exit
         end
       end
@@ -85,7 +85,7 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
       defp delete_row(message_id) do
         case @datastore.delete(%EctoProducerMessage{id: message_id}) do
           {:error, error} ->
-            stop_partition(message_id, "BotsUnit.MessagesProducers.Ecto unable to delete row #{message_id}\n#{inspect error}\nproducer exited.")
+            stop_partition(message_id, "WokAsyncMessageHandler.MessagesProducers.Ecto unable to delete row #{message_id}\n#{inspect error}\nproducer exited.")
             :exit
           {:ok, _postgrex_result} -> #%Postgrex.Result{columns: nil, command: :delete, connection_id: 32823, num_rows: 1, rows: nil}}
             :next
