@@ -108,7 +108,8 @@ It returns a map used as the schema data for sql query.
 It returns {:ok, ecto_schema}. If something else is returned, the transaction is canceled and the consumer will stop consuming 
 this partition. It will be recorded in ```stopped_partitions``` table.
 
-"created" code in module is just an alias of "updated" for now.  
+"create" code in WokAsyncMessageHandler.MessageControllers.Base is just an alias of "update" for now:  
+```def create(event), do: update(event)```
 
 You can rewrite create/1, update/1, destroy/1 if you need to have specific code for your application.  
 Theses methods just take the row "event" and must return ```Wok.Message.no_reply()```  
