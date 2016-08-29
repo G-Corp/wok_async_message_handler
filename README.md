@@ -18,7 +18,7 @@ It's an "at least once message dispatch, at least once message delivered and exa
 
 The **WokAsyncMessageHandler.MessageControllers.Base** module allows to define messages controllers in your application to consume messages.  
 Thanks to message_id header, it prevents to process multiple times the same message.  
-It natively consumes ```created``` (new record in db), ```updated``` (insert or update a record in db) and ```destroyed``` (delete a record from db) event.  
+It natively consumes ```created``` (add a new record in db), ```updated``` (insert or update a record in db) and ```destroyed``` (delete a record from db) event.  
 Look below for more information about it.  
 
 ## Installation
@@ -111,7 +111,11 @@ this partition. It will be recorded in ```stopped_partitions``` table.
 "create" code in WokAsyncMessageHandler.MessageControllers.Base is just an alias of "update" for now:  
 ```def create(event), do: update(event)```
 
-You can rewrite create/1, update/1, destroy/1 if you need to have specific code for your application.  
+By default, create/1, update/1, destroy/1 will do exactly what they need to to.
+create will add a new record in the DB, mapping message fields to db table fields.
+update will do the same (or insert if hte record doesn't exists)
+destroy, will use the id in the message to delete the corresponding record in DB.
+But you can rewrite create/1, update/1, destroy/1 if you need to have specific code for your application.  
 Theses methods just take the row "event" and must return ```Wok.Message.no_reply()```  
 ```def create(event), do: ...[your code]... Wok.Message.no_reply()```  
 ```def destroy(event), do: ...[your code]... Wok.Message.no_reply()```  
