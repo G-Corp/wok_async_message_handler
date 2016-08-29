@@ -127,6 +127,12 @@ Theses methods just take the row "event" and must return ```Wok.Message.no_reply
 ```def destroy(event), do: ...[your code]... Wok.Message.no_reply()```  
 ```def update(event), do: ...[your code]... Wok.Message.no_reply()```  
 
+If you set @master_key to a tuple {:master_id, "message_id"}, this will be used by update and delete to find record.
+If my payload is ```{...message_id: 123...}```, then the generated SQL will be:
+```
+... WHERE master_id = 123 ...
+```
+
 ## serializers
 
 A serializer has multiple functions :

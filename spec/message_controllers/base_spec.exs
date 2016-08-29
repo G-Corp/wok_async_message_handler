@@ -141,6 +141,36 @@ defmodule WokAsyncMessageHandler.MessageControllers.BaseSpec do
                      .to eq([{"bots_events_777", Repo.get(ConsumerMessageIndex, cmi.id)}])
             end
           end
+
+          context "when using another field as id to find the message" do
+            let! :stopped_partition, do: Repo.insert!(%StoppedPartition{topic: "pepito", partition: 999, message_id: 876, error: "original error"})
+            let! :cmi, do: Repo.insert!(%ConsumerMessageIndex{topic: "bots_events", partition: 435, id_message: 400})
+            let :event, do: {:message_transfert, "",
+                               {:wok_msg,
+                                {:message, "888888",
+                                 ["bot/resource/updated"], "bot", %{},
+                                 %{binary_body: true, compress: true, message_id: 676},
+                                 "[{\"version\":1,\"payload\":{\"id\":565, \"topic\":\"tropico\", \"partition\":\"111\", \"pmessage_id\":\"876\", \"field_to_remap\":\"remaped error\"}}]"},
+                                {:wok_msg_resp, false, :undefined, :undefined, :undefined, ""}, [],
+                                :undefined, :undefined}, 435, "bots_events", "bot/resource/updated",
+                               {Module, :update},
+                               :a,
+                               :a,
+                               :a,
+                               ""}
+            before do: {:shared, result: TestMessageControllerWithMasterKey.update(event)}
+            it do
+              expect(shared.result).to eq(event)
+              expect(ConsumerMessageIndex |> Repo.all |> Enum.count).to eq(1)
+              expect(StoppedPartition |> Repo.all |> Enum.count).to eq(1)
+              expect(StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
+              .to eq(%{error: "remaped error", message_id: 876, partition: 111, topic: "tropico"})
+              expect(Repo.get(ConsumerMessageIndex, cmi.id).id_message).to eq(676)
+              expect(:ets.lookup(:botsunit_wok_consumers_message_index, "bots_events_435"))
+                     .to eq([{"bots_events_435", Repo.get(ConsumerMessageIndex, cmi.id)}])
+            end
+          end
+
           context "when error on insert in db" do
             before do: allow(Repo).to accept(:insert_or_update, fn(_) -> {:error, :ecto_changeset} end)
             before do

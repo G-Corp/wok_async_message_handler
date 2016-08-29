@@ -9,6 +9,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       def datastore, do: @datastore
       def model, do: @model
       def keys_mapping, do: @keys_mapping
+      def master_key, do: @master_key
 
       def create(event), do: update(event)
 
@@ -172,7 +173,15 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
 
     defp record_and_payload_from_event(controller, event) do
       payload = expected_version_of_payload(event, controller.message_version)
-      case controller.datastore.get(controller.model, payload["id"]) do
+      if controller.master_key != nil do
+        controller.datastore.get_by(
+          controller.model,
+          [{elem(controller.master_key, 0), payload[elem(controller.master_key, 1)]}]
+        )
+      else
+        controller.datastore.get(controller.model, payload["id"])
+      end
+      |> case do
         nil -> {struct(controller.model), payload}
         record -> {record, payload}
       end
