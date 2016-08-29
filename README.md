@@ -83,6 +83,12 @@ don't forget to clean your tests after (generated migrations files in priv/repo/
 
 ## messages controllers
 
+Messages controllers use an ets table as cache to keep the last processed message_id.  
+You need to add this line to the start function of your application (or anywhere you want if you know what you do) :  
+```
+:ets.new(WokAsyncMessageHandler.MessageControllers.Base.Helpers.ets_table, [:set, :public, :named_table])
+```
+
 To generate a messages controller for a resource, use mix task :
 ```
 mix wok_async_message_handler.controller --schema MyAppEctoSchema
