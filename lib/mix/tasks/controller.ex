@@ -20,7 +20,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Controller do
   end
 
   embed_template :controller, """
-  defmodule <%= @app_module %>.MessagesController.<%= @schema %>Controller do
+  defmodule <%= @app_module %>.MessageControllers.<%= @schema %>Controller do
     @message_version 1 # handled message version
     @datastore <%= @repo %> # repo for your resource
     @model <%= @schema %> # Resource you will receive messages for
