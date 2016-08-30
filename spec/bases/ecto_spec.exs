@@ -55,11 +55,12 @@ defmodule WokAsyncMessageHandler.Spec.Bases.EctoSpec do
 
     context "when fetch is not ok" do
       before do: allow(Repo).to accept(:all, fn(_) -> raise "error" end)
-      before do: allow(Exceptions).to accept(:throw_exception, 
-        fn(exception, data, :messages, false) -> passthrough([exception, data, :messages, false]) end
+      before do: allow(Exceptions).to accept(:throw_exception,
+        fn(%RuntimeError{}, _data, :messages, false) -> nil end
       )
-      it do: expect(MessageProducer.messages "topic_987", 12, 34).to eq([])
-      xit do: expect(Exceptions).to accepted(:throw_exception, :any, count: 1) #spy does not work with macro ???
+      subject! do: MessageProducer.messages "topic_987", 12, 34
+      it do: is_expected.to eq([])
+      it do: expect(Exceptions).to accepted(:throw_exception, :any, count: 1)
     end
   end
 
