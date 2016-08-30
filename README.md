@@ -26,7 +26,7 @@ Look below for more information about it.
 in your mix.exs file, include in deps :
 ```
 [...
-  {:wok_async_message_handler, git: "git@gitlab.botsunit.com:msaas/wok_async_message_handler.git"},
+  {:wok_async_message_handler, git: "git@gitlab.botsunit.com:msaas/wok_async_message_handler.git", branch: "master"},
 ...]
 ```
 
