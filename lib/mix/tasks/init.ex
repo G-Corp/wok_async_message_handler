@@ -86,7 +86,7 @@ lib/#{app_name}/services/wok_async_message_handler.ex is a default message handl
     @application :<%= @app_name %> #should be your app name
     @producer_name "<%= @app_name %>" #'from' field in messages
     @realtime_topic "" #don't leave this blank!
-    @datastore <%= @repo %> #store module for messages
+    @datastore <%= inspect @repo %> #store module for messages
     @serializers <%= @app_module %>.MessageSerializers #your serializers module "namespace"
     use WokAsyncMessageHandler.Bases.Ecto
   end
