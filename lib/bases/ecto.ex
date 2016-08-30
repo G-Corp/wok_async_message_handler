@@ -94,7 +94,7 @@ defmodule WokAsyncMessageHandler.Bases.Ecto do
 
       @spec stop_partition(integer, String.t) :: no_return
       defp stop_partition(message_id, error) do
-        log_warning(error)
+        __MODULE__.log_warning(error)
         message = @datastore.get(EctoProducerMessage, message_id)
         @datastore.insert!(%StoppedPartition{topic: message.topic, partition: message.partition, message_id: message_id, error: error})
       end

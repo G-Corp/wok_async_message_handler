@@ -77,11 +77,11 @@ defmodule WokAsyncMessageHandler.Spec.Bases.EctoSpec do
     context "when message is sent without error but db delete does not work" do
       before do
         allow(Repo).to accept(:delete, fn(_) -> {:error, "my error"} end)
-        allow(WokAsyncMessageHandler.MessagesProducers.TestMessageProducer).to accept(:log_warning, fn(_message) -> nil end)
+        allow(WokAsyncMessageHandler.Spec.Bases.DummyProducer).to accept(:log_warning, fn(_message) -> nil end)
         {:shared, result: MessageProducer.response(message.id, {:ok, :tuple}, true) }
       end
       it do: expect( shared.result ).to eq(:exit)
-      xit do: expect( WokAsyncMessageHandler.MessagesProducers.TestMessageProducer ).to accepted(:log_warning, :any, count: 1)
+      it do: expect( WokAsyncMessageHandler.Spec.Bases.DummyProducer ).to accepted(:log_warning, :any, count: 1)
       it do: expect( StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
              .to eq(%{topic: "topic", partition: 1, message_id: message.id, error: "WokAsyncMessageHandler.MessagesProducers.Ecto unable to delete row #{message.id}\n\"my error\"\nproducer exited."})
     end
@@ -89,11 +89,11 @@ defmodule WokAsyncMessageHandler.Spec.Bases.EctoSpec do
     context "when message is not sent" do
       let! :message, do: Repo.insert!(%EctoProducerMessage{topic: "topic2", partition: 3, blob: "blob123", inserted_at: t, updated_at: t})
       before do
-        allow(MessageProducer).to accept(:log_warning, fn(_message) -> nil end)
+        allow(WokAsyncMessageHandler.Spec.Bases.DummyProducer).to accept(:log_warning, fn(_message) -> nil end)
         {:shared, result: MessageProducer.response(message.id, {:error, "an error"}, true) }
       end
       it do: expect( shared.result ).to eq(:exit)
-      xit do: expect( MessageProducer ).to accepted(:log_warning, :any, count: 1)
+      it do: expect( WokAsyncMessageHandler.Spec.Bases.DummyProducer ).to accepted(:log_warning, :any, count: 1)
       it do: expect( StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
             .to eq(%{topic: "topic2", partition: 3, message_id: message.id, error: "WokAsyncMessageHandler.MessagesProducers.Ecto error while sending message #{message.id}\n\"an error\"\nproducer exited."})
     end
@@ -101,11 +101,11 @@ defmodule WokAsyncMessageHandler.Spec.Bases.EctoSpec do
     context "when a middleware stop message sending" do
       let! :message, do: Repo.insert!(%EctoProducerMessage{topic: "topic23", partition: 5, blob: "blob987", inserted_at: t, updated_at: t})
       before do
-        allow(MessageProducer).to accept(:log_warning, fn(_message) -> nil end)
+        allow(WokAsyncMessageHandler.Spec.Bases.DummyProducer).to accept(:log_warning, fn(_message) -> nil end)
         {:shared, result: MessageProducer.response(message.id, {:stop, "middleware", "middle_error"}, true) }
       end
       it do: expect( shared.result ).to eq(:exit)
-      xit do: expect( MessageProducer ).to accepted(:log_warning, :any, count: 1)
+      it do: expect( WokAsyncMessageHandler.Spec.Bases.DummyProducer ).to accepted(:log_warning, :any, count: 1)
       it do: expect( StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
             .to eq(%{topic: "topic23", partition: 5, message_id: message.id, error: "WokAsyncMessageHandler.MessagesProducers.Ecto message #{message.id} delivery stopped by middleware middleware\n\"middle_error\"\nproducer exited."})
     end
