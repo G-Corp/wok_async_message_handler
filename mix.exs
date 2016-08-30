@@ -12,7 +12,10 @@ defmodule WokAsyncMessageHandler.Mixfile do
       start_permanent: Mix.env == :prod,
       test_coverage: [tool: ExCoveralls, test_task: "espec"],
       version: "0.0.1",
-      elixirc_options: [warnings_as_errors: true]
+      elixirc_options: [warnings_as_errors: true],
+      aliases: [
+        "espec": ["ecto.create --quiet", "ecto.migrate", "espec"],
+      ]
     ]
   end
 

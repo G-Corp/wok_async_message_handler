@@ -71,12 +71,9 @@ my_app_ecto_schema = MyApp.Datastores.PG.get(MyApp.MyAppEctoSchema, 1)
 create a local file in config directory to configure database access (duplicate config/local.exs.example if ok)
 ```
 MIX_ENV=test mix wok_async_message_handler.init
-MIX_ENV=test mix ecto.drop
-MIX_ENV=test mix ecto.create
-MIX_ENV=test mix ecto.migrate
 mix espec
-MIX_ENV=tests mix wok_async_message_handler.controller --schema MyAppEctoSchema #test controller generation
-MIX_ENV=tests mix wok_async_message_handler.serializer --schema MyAppEctoSchema #test serializer generation
+MIX_ENV=test mix wok_async_message_handler.controller --schema MyAppEctoSchema #test controller generation
+MIX_ENV=test mix wok_async_message_handler.serializer --schema MyAppEctoSchema #test serializer generation
 ```
 don't forget to clean your tests after (generated migrations files in priv/repo/migrations)  
 
