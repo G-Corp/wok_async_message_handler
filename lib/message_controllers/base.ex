@@ -63,8 +63,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
     def do_update(controller, event) do
       if message_not_already_processed?(controller, event) do
         {:ok, consumer_message_index} = controller.datastore.transaction(fn() ->
-          {record, _payload} = record_and_payload_from_event(controller, event)
-          attributes = attributes_from_event(event, controller.message_version, controller.keys_mapping)
+          {record, payload} = record_and_payload_from_event(controller, event)
+          attributes = map_payload_to_attributes(payload, controller.keys_mapping)
                        |> controller.on_update_before_update()
 
           controller.model.update_changeset(record, attributes)
@@ -86,20 +86,19 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
     def do_destroy(controller, event) do
       if message_not_already_processed?(controller, event) do
         {:ok, consumer_message_index} = controller.datastore.transaction(fn() ->
-          attributes = attributes_from_event(event, controller.message_version, controller.keys_mapping)
-                       |> controller.on_destroy_before_delete()
-          case controller.datastore.get(controller.model, attributes.id) do
-            nil ->
-              Logger.warn "No match for destroyed #{inspect controller.model} with id #{attributes.id}"
+          {record, _payload} = record_and_payload_from_event(controller, event)
+          case Map.get(record.__meta__, :state) do
+            :built ->
+              Logger.warn "No match for destroyed #{inspect controller.model} with id #{record.id}"
               update_consumer_message_index(controller, event)
-            ecto_schema ->
-              Logger.info "Destroying #{inspect controller.model} with id #{attributes.id}"
-              case controller.datastore.delete(ecto_schema) do
+            :loaded ->
+              Logger.info "Destroying #{inspect controller.model} with id #{record.id}"
+              case controller.datastore.delete(record) do
                 {:ok, ecto_schema} ->
                   {:ok, _} = controller.on_destroy_after_delete(ecto_schema)
                   update_consumer_message_index(controller, event)
                 {:error, ecto_changeset} ->
-                  Logger.info "Unable to destroy #{inspect controller.model} with id #{attributes.id}"
+                  Logger.info "Unable to destroy #{inspect controller.model} with id #{record.id}"
                   controller.datastore.rollback(ecto_changeset)
               end
           end
@@ -163,12 +162,6 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
             ecto_schema.id_message
         end
       last_processed_message_id
-    end
-
-    defp attributes_from_event(event, version, atom_changeset) do
-      event
-      |> expected_version_of_payload(version)
-      |> map_payload_to_attributes(atom_changeset)
     end
 
     defp record_and_payload_from_event(controller, event) do

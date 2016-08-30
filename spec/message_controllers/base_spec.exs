@@ -398,6 +398,31 @@ defmodule WokAsyncMessageHandler.MessageControllers.BaseSpec do
             it do: expect(String.match?(shared.exception.message, ~r/Wok Async Message Handler Exception @destroy$/))
           end
         end
+
+        context "when using another field as id to find the message" do
+          let! :resource, do: Repo.insert!(%StoppedPartition{topic: "my_topic", partition: 234, message_id: 275, error: "no_error..."})
+          let :event, do: {:message_transfert, "",
+                               {:wok_msg,
+                                {:message, "",[], "", %{},
+                                 %{binary_body: true, compress: true, message_id: 551},
+                                 "[{\"version\":1,\"payload\":{\"id\":87654, \"pmessage_id\":\"275\"}}]"},
+                                {:wok_msg_resp, false, :undefined, :undefined, :undefined, ""}, [],
+                                :undefined, :undefined}, 0, "bots_events", "bot/stopped_partition/destroyed",
+                               {Module, :destroy},
+                               :b,:"",:a,""}
+          context "when the whole transaction is ok" do
+            before do
+              {:shared, result: TestMessageControllerWithMasterKey.destroy(event)}
+            end
+            it do: expect(shared.result).to eq(event)
+            it do: expect(ConsumerMessageIndex |> Repo.all |> Enum.count).to eq(1)
+            it do: expect(Repo).to accepted(:one, :any, count: 0)
+            it do: expect(StoppedPartition |> Repo.all |> Enum.count ).to eq(0)
+            it do: expect(Repo.get(ConsumerMessageIndex, cmi.id).id_message).to eq(551)
+            it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, "bots_events_0"))
+                   .to eq([{"bots_events_0", Repo.get(ConsumerMessageIndex, cmi.id)}])
+          end
+        end
       end
     end
   end
