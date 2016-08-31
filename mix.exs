@@ -14,7 +14,7 @@ defmodule WokAsyncMessageHandler.Mixfile do
       version: "0.0.1",
       elixirc_options: [warnings_as_errors: true],
       aliases: [
-        "espec": ["ecto.create --quiet", "ecto.migrate", "espec"],
+        "espec": ["ecto.drop --quiet", "ecto.create --quiet", "ecto.migrate", "espec"],
       ]
     ]
   end

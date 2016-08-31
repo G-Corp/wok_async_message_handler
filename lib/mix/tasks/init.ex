@@ -20,9 +20,9 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
     file = Path.join(migrations_path, "#{timestamp()}_add_consumer_messages_indexes.exs")
     create_file file, partition_indexes_template([host_app_main_repo: host_app_main_repo])
 
-    default_service = Path.join(["lib", app_name, "services"])
+    default_service = Path.join(["lib", app_name, "wok"])
     create_directory(default_service)
-    create_file Path.join(default_service, "wok_async_message_handler.ex"), service_template([app_module: app_module, app_name: app_name, repo: host_app_main_repo])
+    create_file Path.join(default_service, "gateway.ex"), service_template([app_module: app_module, app_name: app_name, repo: host_app_main_repo])
     create_directory(Path.join ["lib", app_name, "message_serializers"] )
     create_directory(Path.join ["lib", app_name, "message_controllers"] )
 
@@ -30,9 +30,9 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
 WokAsyncMessageHandler initialized.
 
 All files generated. To finish setup, add this line to your config file:
-config :wok, producer: [handler: #{app_module}.Services.WokAsyncMessageHandler, frequency: 100, number_of_messages: 1000]
+config :wok, producer: [handler: #{app_module}.Wok.Gateway, frequency: 100, number_of_messages: 1000]
 
-lib/#{app_name}/services/wok_async_message_handler.ex is a default message handler generated for you (YOU NEED TO PARAMETER THIS!!!!! DON'T FORGET TO LOOK AT IT!)
+lib/#{app_name}/services/wok_gateway.ex is a default message gateway generated for you (YOU NEED TO PARAMETER THIS!!!!! DON'T FORGET TO LOOK AT IT!)
 
 
 "
@@ -82,13 +82,14 @@ lib/#{app_name}/services/wok_async_message_handler.ex is a default message handl
   """
 
   embed_template :service, """
-  defmodule <%= @app_module %>.Services.WokAsyncMessageHandler do
+  defmodule <%= @app_module %>.Wok.Gateway do
     @application :<%= @app_name %> #should be your app name
     @producer_name "<%= @app_name %>" #'from' field in messages
     @realtime_topic "" #don't leave this blank!
+    @messages_topic "" #don't leave this blank!
     @datastore <%= inspect @repo %> #store module for messages
     @serializers <%= @app_module %>.MessageSerializers #your serializers module "namespace"
-    use WokAsyncMessageHandler.Bases.Ecto
+    use WokAsyncMessageHandler.MessagesEnqueuers.Ecto
   end
 
   """

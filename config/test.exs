@@ -7,4 +7,6 @@ config :wok_async_message_handler, WokAsyncMessageHandler.Spec.Repo,
        pool: Ecto.Adapters.SQL.Sandbox,
        port: 5432
 
+config :wok_async_message_handler, messages_repo: WokAsyncMessageHandler.Spec.Repo
+
 if File.exists?("config/local.exs"), do: import_config "local.exs"
