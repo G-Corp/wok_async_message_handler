@@ -95,9 +95,9 @@ mix wok_async_message_handler.controller --schema MyEctoSchemaForAnEvent
 
 10. map your wok handlers config to your controller and it will start consuming messages.  
 By default, this consumer will consume :  
-- "created" : store a record in database, using message's payload.  
-- "destroyed" : delete a record from database, using message's payload.  
-- "updated" : update or create a record in database, using message's payload.  
+  - "created" : store a record in database, using message's payload.  
+  - "destroyed" : delete a record from database, using message's payload.  
+  - "updated" : update or create a record in database, using message's payload.  
 
 that's it! You now can produce and consume messages.
 
