@@ -50,11 +50,12 @@ mix ecto.migrate
 ```
 
 4. add to your config file :  
+tell to WokAsyncMessageHandler.MessagesHandlers.Ecto which repo to use to fetch and delete messages  
 ```
-# tell to WokAsyncMessageHandler.MessagesHandlers.Ecto which repo to use to fetch and delete messages
 config :wok_async_message_handler, messages_repo: MyApp.EctoRepo
-
-# tell to wok to use WokAsyncMessageHandler.MessagesHandlers.Ecto as messages handler
+```
+tell to wok to use WokAsyncMessageHandler.MessagesHandlers.Ecto as messages handler  
+```
 config :wok, producer: [
               handler: WokAsyncMessageHandler.MessagesHandlers.Ecto, 
               frequency: 100, 
@@ -81,9 +82,9 @@ MyApp.MyAppEctoSchema
 
 7. add the creation of WokAsyncMessageHandler.MessageControllers.Base.Helpers.ets_table to your app file :
 ```
-# table to store the last message_id processed as a cache
 :ets.new(WokAsyncMessageHandler.MessageControllers.Base.Helpers.ets_table, [:set, :public, :named_table])
 ```
+(table to store the last message_id processed as a cache)
 
 8. generate a messages controller for a model :
 ```
