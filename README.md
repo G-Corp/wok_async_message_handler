@@ -30,19 +30,19 @@ A mix task allows to generate controller for your ecto schema.
 mix wok_async_message_handler.init
 ```
 This will create 3 ecto migrations, a serializers folder and a default message enqueur :
-- WokAsyncMessageHandler.Models.EctoProducerMessage :  
-store messages to send (3 fields : topic, partition, blob)
-- WokAsyncMessageHandler.Models.StoppedPartition :  
-store stopped partitions (when errors occur) and allow the connection to a monitoring system for example
-- WokAsyncMessageHandler.Models.ConsumerMessageIndex :  
-store the last message_id received from kafka for a {topic, partition} to prevent to process a message twice (if it has been committed twice in kafka)
-- lib/message_serializers :  
-directory to store message serializers for ecto schema("your models") (see below for generation)
-- lib/message_controllers :  
-directory to store message controllers for ecto schema("your models") (see below for generation)
-- lib/wok/gateway.ex :  
-a module to store messages to send in WokAsyncMessageHandler.Models.EctoProducerMessage  
-(YOU NEED TO PARAMETER THIS FILE! DON'T FORGET TO OPEN IT AND ADJUST SETTINGS!)
+  - WokAsyncMessageHandler.Models.EctoProducerMessage :  
+   store messages to send (3 fields : topic, partition, blob)
+  - WokAsyncMessageHandler.Models.StoppedPartition :  
+   store stopped partitions (when errors occur) and allow the connection to a monitoring system for example
+  - WokAsyncMessageHandler.Models.ConsumerMessageIndex :  
+   store the last message_id received from kafka for a {topic, partition} to prevent to process a message twice (if it has been committed twice in kafka)
+  - lib/message_serializers :  
+   directory to store message serializers for ecto schema("your models") (see below for generation)
+  - lib/message_controllers :  
+   directory to store message controllers for ecto schema("your models") (see below for generation)
+  - lib/wok/gateway.ex :  
+   a module to store messages to send in WokAsyncMessageHandler.Models.EctoProducerMessage  
+   (YOU NEED TO PARAMETER THIS FILE! DON'T FORGET TO OPEN IT AND ADJUST SETTINGS!)
 
 3. if required, create your database (mix ecto.create). Then, to create tables for wamh schema, run :
 ```
