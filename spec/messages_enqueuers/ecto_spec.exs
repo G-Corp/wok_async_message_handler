@@ -43,7 +43,7 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
         allow(Repo).to accept(:insert, fn(fake_struct) -> {:ok, fake_struct} end )
         {:ok, message} = DummyEnqueuer.enqueue_rtmessage(
           %{session_id: "my_session_id", data_for_pkey: "123", source: "my_source"},
-          %{pkey: :data_for_pkey, from: "my_from", to: "my_to"}
+          [pkey: :data_for_pkey, from: "my_from", to: "my_to"]
         )
         {:shared, message: message}
       end
@@ -96,10 +96,14 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
       it do: {:error, "wok message error"} = DummyEnqueuer.enqueue_message(fake_struct, :created)
     end
 
-    context "with custom topic" do
+    context "with custom topic and metadata" do
       before do
         allow(Repo).to accept(:insert, fn(fake_struct) -> {:ok, fake_struct} end )
-        {:ok, message} = DummyEnqueuer.enqueue_message(fake_struct, :created, "blablatopic")
+        {:ok, message} = DummyEnqueuer.enqueue_message(
+                          fake_struct, 
+                          :created, 
+                          [metadata: %{key: :value}, topic: "blablatopic"]
+                        )
         {:shared, message: message}
       end
      it do: expect(Repo).to accepted(:insert, :any, count: 1)
@@ -111,7 +115,7 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
                                           {"blablatopic", "fake_id1"},
                                           "from_bot",
                                           "bot/resource/created",
-                                          "[{\"version\":1,\"payload\":{\"id\":\"fake_id1\"}}]"
+                                          "[{\"version\":1,\"payload\":{\"id\":\"fake_id1\"},\"metadata\":{\"key\":\"value\"}}]"
                                           ) |> elem(3)
                                         )
     end

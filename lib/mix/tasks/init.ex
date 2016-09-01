@@ -30,10 +30,16 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
 WokAsyncMessageHandler initialized.
 
 All files generated. To finish setup, add this line to your config file:
-config :wok, producer: [handler: #{app_module}.Wok.Gateway, frequency: 100, number_of_messages: 1000]
+    config :wok, producer: [handler: #{app_module}.Wok.Gateway, frequency: 100, number_of_messages: 1000]
+    config :wok_async_message_handler, messages_repo: #{inspect host_app_main_repo}
 
-lib/#{app_name}/services/wok_gateway.ex is a default message gateway generated for you (YOU NEED TO PARAMETER THIS!!!!! DON'T FORGET TO LOOK AT IT!)
+lib/#{app_name}/wok/gateway.ex is a default message gateway generated for you (YOU NEED TO PARAMETER THIS!!!!! DON'T FORGET TO LOOK AT IT!)
+generate serializers for your ecto schema:
+    mix wok_async_message_handler.serializer --schema MyAppEctoSchema
+and produce messages!
 
+generate messages controller to consume events from kafka:
+    mix wok_async_message_handler.controller --schema MyEctoSchemaForAnEvent
 
 "
     Mix.shell.info [msg]

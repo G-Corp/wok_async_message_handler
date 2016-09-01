@@ -2,16 +2,19 @@
 
 * WokAsyncMessageHandler.MessagesEnqueuers.Ecto :  
 module (macro to "use") to enqueue messages in database using Ecto, for asynchonous send to kafka by wok producer  
-When you execute mix setup, a default enqueur is created for your project.
+When you execute mix setup, a default enqueur is created for your project.  
+A mix task allows to generate serializers for your ecto schema.  
 
 * WokAsyncMessageHandler.MessagesHandlers.Ecto :  
-module with ```messages``` function and ```response``` function to fetch messages to send to wok producer
+module called asynchronously by wok producer.
+It contains 2 functions  (```messages``` and ```response```) to give the next n messages to send and 
 and process response after commit in kafka.  
 (you don't need to do anything with this module. Just add the config as explain below and "it works")
 
 * WokAsyncMessageHandler.MessageControllers.Base :  
 module (macro to "use" in another module) to consume messages and 
 store them in your database for events ```created```, ```updated```, ```destroyed```  
+A mix task allows to generate controller for your ecto schema.  
 
 ## Installation
 
@@ -108,7 +111,7 @@ mix espec
 MIX_ENV=tests mix wok_async_message_handler.controller --schema MyAppEctoSchema #test controller generation
 MIX_ENV=tests mix wok_async_message_handler.serializer --schema MyAppEctoSchema #test serializer generation
 ```
-don't forget to clean your tests after (generated migrations files in priv/repo/migrations)  
+don't forget to clean your tests after (generated migrations files in priv/repo/migrations and  lib/wok_async_message_handler)  
 
 ## messages controllers
 
@@ -182,32 +185,6 @@ If you return an integer, it will be send to this partition number, but this beh
 - **message_route/1** :
 the 'to' field in your message.  
 
-## create_and_add_rt_notification_to_message_queue/1
-
-### this method is deprecated. Use WokAsyncMessageHandler.Helpers.RealTimeMessages.build_and_store/3 instead
-
-This method sends a realtime message. **This is an opinionated method.**  
-It just generates a message in queue table to "#{@producer_name}/real_time/notify" (@producer_name defined in your handler when you run the "init")  
-If it doesn't fit your needs, rewrite a method in your handler.  
-It takes a map as argument.  
-
-IT DOESN'T HANDLE VERSIONING OF RT MESSAGES FOR NOW.  
-
-If you need to send messages to a session_id, call :
-```
-create_and_add_rt_notification_to_message_queue(%{session_id: my_session_id})
-```
-
-The whole map will be merged into message :payload value with the %{source: @producer_name} map.  
-IE, create_and_add_rt_notification_to_message_queue(%{session_id: my_session_id}) will have a payload field with %{session_id: my_session_id, source: @producer_name}  
-
-This method accept an options (map) as second param. You can add these fields in this map:
-* ```:pkey``` : atom, let you specify which key from the first map you want to use get the value for partition key.  
-* ```:from``` : string, let you specify a custom ```from``` for the message.  
-* ```:to``` : string, let you specify a custom ```to``` for the message.  
-
-By default, and you should not do it, if you don't specify ```:pkey```, the first value of the map will be used as partition key.
-
 ## "Produce" part
 
 ### WokAsyncMessageHandler.MessagesEnqueuers.Ecto.enqueue_rtmessage/2
@@ -239,12 +216,13 @@ The whole map will be merged into message :payload value.
 If you don't specify a "source" field, it will be added to your payload with @producer_name as value.  
 IE, ```enqueue_rtmessage(%{session_id: my_session_id})``` will have a payload field with ```%{session_id: my_session_id, source: @producer_name}```  
 
-This method accepts an options (map) as second arg. You can add these fields in this map:
+This method accepts options list as second arg. You can define these fields:
 * ```:pkey``` : atom, let you specify which key from the first map you want to use get the value for partition key.  
 * ```:from``` : string, let you specify a custom ```from``` for the message.  
 * ```:to``` : string, let you specify a custom ```to``` for the message.  
+* ```:metadata```: any value, added as metadata in message body.
 
-By default, and you should not use it, if you don't specify ```:pkey```, the first value of the map will be used as partition key.  
+By default, and you should not use it, if you don't specify ```:pkey```, the map is cast to a keyword list and the first value is used as partition key (Map.to_list reorder the keys in alphabetical order).  
 
 ### WokAsyncMessageHandler.MessagesEnqueuers.Ecto.enqueue_message/3
 
@@ -252,10 +230,14 @@ By default, and you should not use it, if you don't specify ```:pkey```, the fir
 WokAsyncMessageHandler.MessagesEnqueuers.Ecto.enqueue_message(
   ecto_schema,  # your data / model / ecto_schema
   event, # the event you want to produce. Usually :created | :updated | :destroyed
-  [topic] # optionnal, topic where you want to send the message, default to generated gateway's attribute @messages_topic
+  [metadata: :any_value, topic: "optionnal_topic"] # optionnal
 ```
 Use this method when you want to send a message/event in your broker.  
 It will build and store the message in your database with the parameters defined in the handler.  
+This method accepts options list as second arg. You can define these fields:
+* ```:topic``` : string, topic where you want to send the message, default to generated gateway's attribute @messages_topic
+* ```:metadata```: any value, added as metadata in message body.
+
 
 
 
