@@ -99,6 +99,16 @@ By default, this consumer will consume :
   - "destroyed" : delete a record from database, using message's payload.  
   - "updated" : update or create a record in database, using message's payload.  
 
+11. **for production only**, to format exceptions as json in error.log, add this line to your config file:  
+```
+config :wok_async_message_handler, prod: true
+```
+
+12. Use helpers for your tests to generate fake messages for your messages controllers:  
+```
+WokAsyncMessageHandler.Helpers.TestMessage.build_event_message(%{id: 123, ...}, "/bot/resource/event")
+```
+
 that's it! You now can produce and consume messages.
 
 
@@ -112,7 +122,10 @@ mix espec
 MIX_ENV=tests mix wok_async_message_handler.controller --schema MyAppEctoSchema #test controller generation
 MIX_ENV=tests mix wok_async_message_handler.serializer --schema MyAppEctoSchema #test serializer generation
 ```
-don't forget to clean your tests after (generated migrations files in priv/repo/migrations and  lib/wok_async_message_handler)  
+don't forget to clean your tests after (generated migrations files in priv/repo/migrations and  lib/wok_async_message_handler):  
+```
+rm -rf priv lib/wok_async_message_handler
+```
 
 ## messages controllers
 

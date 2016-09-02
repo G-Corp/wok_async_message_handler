@@ -8,5 +8,6 @@ config :wok_async_message_handler, WokAsyncMessageHandler.Spec.Repo,
        port: 5432
 
 config :wok_async_message_handler, messages_repo: WokAsyncMessageHandler.Spec.Repo
+config :wok_async_message_handler, prod: true
 
 if File.exists?("config/local.exs"), do: import_config "local.exs"
