@@ -4,3 +4,5 @@
 erl_crash.dump
 *.ez
 /config/local.exs
+/priv
+/lib/wok_async_message_handler
