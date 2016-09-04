@@ -2,7 +2,9 @@
 
 **if you update from an older version, just run mix ```wok_async_message_handler.init```.**  
 **This will generate new files without touching the old ones.**  
-**You can then run commands ```eto.migrate``` etc etc to update**  
+**You can then run commands ```ecto.migrate``` etc etc to update**  
+
+
 
 * WokAsyncMessageHandler.MessagesEnqueuers.Ecto :  
 module (macro to "use") to enqueue messages in database using Ecto, for asynchonous send to kafka by wok producer  
