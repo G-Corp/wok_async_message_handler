@@ -2,7 +2,7 @@
 
 * WokAsyncMessageHandler.MessagesEnqueuers.Ecto :  
 module (macro to "use") to enqueue messages in database using Ecto, for asynchonous send to kafka by wok producer  
-When you execute mix setup, a default enqueur is created for your project.  
+When you execute mix setup, a default enqueur "YourApp.Wok.Gateway" is created for your project.  
 A mix task allows to generate serializers for your ecto schema.  
 
 * WokAsyncMessageHandler.MessagesHandlers.Ecto :  
@@ -35,7 +35,7 @@ This will create 3 ecto migrations, a serializers folder and a default message e
   - WokAsyncMessageHandler.Models.StoppedPartition :  
    store stopped partitions (when errors occur) and allow the connection to a monitoring system for example
   - WokAsyncMessageHandler.Models.ConsumerMessageIndex :  
-   store the last message_id received from kafka for a {topic, partition} to prevent to process a message twice (if it has been committed twice in kafka)
+   store the last message_id received from kafka for a bot to prevent processing a message twice (if it has been committed twice in kafka)
   - lib/message_serializers :  
    directory to store message serializers for ecto schema("your models") (see below for generation)
   - lib/message_controllers :  
@@ -63,7 +63,7 @@ config :wok, producer: [
              ]
 ```
 
-5. create a serializer for your each ecto schema you'll need to send as message (example : User Or Any resource mapped to db as a "model"):  
+5. create a serializer for each ecto schema you'll need to send as message (example : User Or Any resource mapped to db as a "model"):  
 ```
 mix wok_async_message_handler.serializer --schema MyAppEctoSchema
 ```
@@ -106,7 +106,7 @@ config :wok_async_message_handler, prod: true
 
 12. Use helpers for your tests to generate fake messages for your messages controllers:  
 ```
-WokAsyncMessageHandler.Helpers.TestMessage.build_event_message(%{id: 123, ...}, "/bot/resource/event")
+WokAsyncMessageHandler.Helpers.TestMessage.build_event_message(%{id: 123, ...}, "from_bot")
 ```
 
 that's it! You now can produce and consume messages.
@@ -124,7 +124,7 @@ MIX_ENV=tests mix wok_async_message_handler.serializer --schema MyAppEctoSchema 
 ```
 don't forget to clean your tests after (generated migrations files in priv/repo/migrations and  lib/wok_async_message_handler):  
 ```
-rm -rf priv lib/wok_async_message_handler
+MIX_ENV=test mix wok_async_message_handler.clean_tests
 ```
 
 ## messages controllers

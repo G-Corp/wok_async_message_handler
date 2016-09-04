@@ -10,19 +10,34 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
     host_app_main_repo = Mix.Ecto.parse_repo([]) |> List.first
 
     migrations_path = Path.join("priv/#{host_app_main_repo |> Module.split |> List.last |> Macro.underscore}", "migrations")
+
     create_directory(migrations_path)
-    file = Path.join(migrations_path, "#{timestamp()}_add_ecto_producer_message.exs")
-    create_file file, migration_template([host_app_main_repo: host_app_main_repo])
-    :timer.sleep(1000)
-    file = Path.join(migrations_path, "#{timestamp()}_add_ecto_producer_stopped_partitions.exs")
-    create_file file, stopped_partitions_template([host_app_main_repo: host_app_main_repo])
-    :timer.sleep(1000)
-    file = Path.join(migrations_path, "#{timestamp()}_add_consumer_messages_indexes.exs")
-    create_file file, partition_indexes_template([host_app_main_repo: host_app_main_repo])
+    unless file_exists?(migrations_path, "*_add_ecto_producer_message.exs") do
+      file = Path.join(migrations_path, "#{timestamp()}_add_ecto_producer_message.exs")
+      create_file file, migration_template([host_app_main_repo: host_app_main_repo])
+      :timer.sleep(1000)
+    end
+    unless file_exists?(migrations_path, "*_add_ecto_producer_stopped_partitions.exs") do
+      file = Path.join(migrations_path, "#{timestamp()}_add_ecto_producer_stopped_partitions.exs")
+      create_file file, stopped_partitions_template([host_app_main_repo: host_app_main_repo])
+      :timer.sleep(1000)
+    end
+    unless file_exists?(migrations_path, "*_add_consumer_messages_indexes.exs") do
+      file = Path.join(migrations_path, "#{timestamp()}_add_consumer_messages_indexes.exs")
+      create_file file, partition_indexes_template([host_app_main_repo: host_app_main_repo])
+      :timer.sleep(1000)
+    end
+
+    generate_migration_for_cmi_with_from_index(migrations_path, host_app_main_repo)
 
     default_service = Path.join(["lib", app_name, "wok"])
     create_directory(default_service)
-    create_file Path.join(default_service, "gateway.ex"), service_template([app_module: app_module, app_name: app_name, repo: host_app_main_repo])
+
+    unless file_exists?(default_service, "*gateway.ex") do
+      default_service
+      |> Path.join("gateway.ex")
+      |> create_file(service_template([app_module: app_module, app_name: app_name, repo: host_app_main_repo]))
+    end
     create_directory(Path.join ["lib", app_name, "message_serializers"] )
     create_directory(Path.join ["lib", app_name, "message_controllers"] )
 
@@ -43,6 +58,14 @@ generate messages controller to consume events from kafka:
 
 "
     Mix.shell.info [msg]
+  end
+
+  defp generate_migration_for_cmi_with_from_index(migrations_path, host_app_main_repo) do
+    unless file_exists?(migrations_path, "*_cmi_with_from.exs") do
+      file = Path.join(migrations_path, "#{timestamp()}_cmi_with_from.exs")
+      create_file file, cmi_from_update_template([host_app_main_repo: host_app_main_repo])
+      :timer.sleep(1000)
+    end
   end
 
   defp timestamp do
@@ -106,12 +129,33 @@ generate messages controller to consume events from kafka:
 
     def change do
       create table(:consumer_message_indexes) do
+        add :topic, :string, null: false
+        add :partition, :integer, null: false
         add :id_message, :integer, null: false
-        add :from, :string, null: false
         timestamps
+      end
+      create index(:consumer_message_indexes, [:partition])
+      create index(:consumer_message_indexes, [:topic])
+    end
+  end
+  """
+
+  embed_template :cmi_from_update, """
+  defmodule <%= inspect @host_app_main_repo %>.Migrations.AddConsumerMessageIndexes do
+    use Ecto.Migration
+
+    def change do
+      alter table(:consumer_message_indexes) do
+        add :from, :string, null: false
+        remove :topic
+        remove :partition
       end
       create index(:consumer_message_indexes, [:from])
     end
   end
   """
+
+  defp file_exists?(migrations_path, globe) do
+    [] != migrations_path |> Path.join(globe) |> Path.wildcard
+  end
 end
