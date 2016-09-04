@@ -1,6 +1,6 @@
 # WokAsyncMessageHandler 0.0.1
 
-**if you update from an older version, just run mix ```wok_async_message_handler.init```.**  
+**if you update from an older version, just run ```mix wok_async_message_handler.init```.**  
 **This will generate new files without touching the old ones.**  
 **You can then run commands ```ecto.migrate``` etc etc to update**  
 
