@@ -30,11 +30,11 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       end
 
       def on_create_before_insert(attributes), do: attributes
-      def on_create_after_insert(ecto_schema), do: {:ok, ecto_schema}
+      def on_create_after_insert(struct), do: {:ok, struct}
       def on_update_before_update(attributes), do: attributes
-      def on_update_after_update(ecto_schema), do: {:ok, ecto_schema}
+      def on_update_after_update(struct), do: {:ok, struct}
       def on_destroy_before_delete(attributes), do: attributes
-      def on_destroy_after_delete(ecto_schema), do: {:ok, ecto_schema}
+      def on_destroy_after_delete(struct), do: {:ok, struct}
 
       defoverridable [
         on_create_after_insert: 1,
@@ -70,8 +70,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
           controller.model.update_changeset(record, attributes)
           |> controller.datastore.insert_or_update()
           |> case do
-            {:ok, ecto_schema} ->
-              {:ok, _} = controller.on_update_after_update(ecto_schema)
+            {:ok, struct} ->
+              {:ok, _} = controller.on_update_after_update(struct)
               update_consumer_message_index(controller, event)
             {:error, ecto_changeset} ->
               Logger.warn "Unable to update #{inspect controller.model} with attributes #{inspect attributes}"
@@ -94,8 +94,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
             :loaded ->
               Logger.info "Destroying #{inspect controller.model} with id #{record.id}"
               case controller.datastore.delete(record) do
-                {:ok, ecto_schema} ->
-                  {:ok, _} = controller.on_destroy_after_delete(ecto_schema)
+                {:ok, struct} ->
+                  {:ok, _} = controller.on_destroy_after_delete(struct)
                   update_consumer_message_index(controller, event)
                 {:error, ecto_changeset} ->
                   Logger.info "Unable to destroy #{inspect controller.model} with id #{record.id}"
@@ -113,53 +113,44 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
     end
 
     defp update_consumer_message_index_ets(consumer_message_index) do
-      true = :ets.insert(@indexes_ets_table, {build_ets_key(consumer_message_index), consumer_message_index})
+      true = :ets.insert(@indexes_ets_table, {consumer_message_index.from, consumer_message_index})
     end
 
-    defp get_consumer_message_index_ets(ets_key) do
-      [{^ets_key, schema}] = :ets.lookup(@indexes_ets_table, ets_key)
-      schema
+    defp get_consumer_message_index_ets(from) do
+      [{^from, struct}] = :ets.lookup(@indexes_ets_table, from)
+      struct
     end
 
     defp update_consumer_message_index(controller, event) do
-      topic = message_transfert(event, :topic)
-      partition = message_transfert(event, :partition)
+      from = Wok.Message.from(event)
       message_id = Wok.Message.headers(event).message_id
-      ets_key = build_ets_key(topic, partition)
-      schema = get_consumer_message_index_ets(ets_key)
-      case ConsumerMessageIndex.changeset(schema, %{id_message: message_id})
+      struct = get_consumer_message_index_ets(from)
+      case ConsumerMessageIndex.changeset(struct, %{id_message: message_id})
            |> controller.datastore.update() do
-        {:ok, updated_schema} -> updated_schema
+        {:ok, updated_struct} -> updated_struct
         {:error, ecto_changeset} ->
-          Logger.info "Unable to update message index #{inspect ecto_changeset} with id #{schema.id}"
+          Logger.info "Unable to update message index #{inspect ecto_changeset} with id #{struct.id}"
           controller.datastore.rollback(ecto_changeset)
       end
     end
 
-    defp build_ets_key(topic, partition), do: "#{topic}_#{partition}"
-    defp build_ets_key(consumer_message_index) do
-      "#{consumer_message_index.topic}_#{consumer_message_index.partition}"
-    end
-
     defp find_last_processed_message_id(controller, event) do
-      topic = message_transfert(event, :topic)
-      partition = message_transfert(event, :partition)
-      ets_key = build_ets_key(topic, partition)
+      from = Wok.Message.from(event)
       last_processed_message_id =
-        case :ets.lookup(@indexes_ets_table, ets_key) do
+        case :ets.lookup(@indexes_ets_table, from) do
           [] ->
-            case from(c in ConsumerMessageIndex, where: [topic: ^topic, partition: ^partition])
+            case from(c in ConsumerMessageIndex, where: [from: ^from])
                  |> controller.datastore.one do
               nil ->
-                ecto_schema = controller.datastore.insert!(%ConsumerMessageIndex{topic: topic, partition: partition, id_message: -1})
-                update_consumer_message_index_ets(ecto_schema)
-                ecto_schema.id_message
-              ecto_schema ->
-                update_consumer_message_index_ets(ecto_schema)
-                ecto_schema.id_message
+                struct = controller.datastore.insert!(%ConsumerMessageIndex{from: from, id_message: -1})
+                update_consumer_message_index_ets(struct)
+                struct.id_message
+              struct ->
+                update_consumer_message_index_ets(struct)
+                struct.id_message
             end
-          [{^ets_key, ecto_schema}] ->
-            ecto_schema.id_message
+          [{^from, struct}] ->
+            struct.id_message
         end
       last_processed_message_id
     end

@@ -1,8 +1,5 @@
 defmodule WokAsyncMessageHandler.Helpers.TestMessage do
-  @bot_name "user"
-
   require Record
-
 
   Record.defrecord(:message_transfert, 
    Record.extract(
@@ -25,22 +22,22 @@ Record.defrecord(:message,
  )
  )
 
- def build_event_message(payload, to) do
+ def build_event_message(payload, from, message_id) do
    message_transfert(
-     message: build_message(payload, to),
+     message: build_message(payload, from, message_id),
      partition: 1,
      topic: "bots_events"
    )
  end
 
- defp build_message(payload, to) do
+ defp build_message(payload, from, message_id) do
    wok_msg(
      message: message(
        uuid: Ecto.UUID.generate,
-       to: to,
-       from: @bot_name,
+       to: "to_bot",
+       from: from,
        params: %{},
-       headers: %{message_id: 1},
+       headers: %{message_id: message_id},
        body: build_message_body(payload)
      )
    )

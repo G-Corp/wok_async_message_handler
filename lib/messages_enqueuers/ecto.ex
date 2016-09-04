@@ -22,10 +22,10 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.Ecto do
       end
 
       @spec enqueue_message(Ecto.Schema.t, :atom, [metadata: map, topic: String.t]) :: {:ok, EctoProducerMessage.t} | {:error, term}
-      def enqueue_message(ecto_schema, event, options \\ []) do
-        serializer = schema_serializer(ecto_schema)
-        message = build_message(ecto_schema, event, serializer, Keyword.get(options, :metadata))
-        topic_partition = {Keyword.get(options, :topic, @messages_topic), serializer.partition_key(ecto_schema)}
+      def enqueue_message(ecto_struct, event, options \\ []) do
+        serializer = schema_serializer(ecto_struct)
+        message = build_message(ecto_struct, event, serializer, Keyword.get(options, :metadata))
+        topic_partition = {Keyword.get(options, :topic, @messages_topic), serializer.partition_key(ecto_struct)}
         from = @producer_name
         to = serializer.message_route(event)
         enqueue(topic_partition, from, to, message)
@@ -41,10 +41,10 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.Ecto do
       end
 
       @spec build_message(Ecto.Schema.t, :atom, module) :: map()
-      def build_message(ecto_schema, event, serializer, metadata \\ nil) do
+      def build_message(ecto_struct, event, serializer, metadata \\ nil) do
         Enum.map(serializer.message_versions, fn(version) ->
           message = %{
-              payload: apply(serializer, event, [ecto_schema, version]),
+              payload: apply(serializer, event, [ecto_struct, version]),
               version: version
             }
           if metadata == nil, do: message, else: Map.put(message, :metadata, metadata)
@@ -52,12 +52,12 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.Ecto do
       end
 
       @spec schema_serializer(Ecto.Schema.t) :: module
-      defp schema_serializer(schema) do
-        schema_str = schema.__struct__
+      defp schema_serializer(ecto_struct) do
+        ecto_struct_str = ecto_struct.__struct__
                     |> to_string
                     |> String.split(".")
                     |> List.last
-        Module.concat([@serializers, schema_str])
+        Module.concat([@serializers, ecto_struct_str])
       end
     end
   end

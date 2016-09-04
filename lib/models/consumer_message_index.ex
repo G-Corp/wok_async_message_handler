@@ -5,12 +5,11 @@ defmodule WokAsyncMessageHandler.Models.ConsumerMessageIndex do
 
   @type t :: %__MODULE__{}
 
-  @accepted_params ~w(id_message partition topic)a
-  @required_params ~w(id_message partition topic)a
+  @accepted_params ~w(from id_message)a
+  @required_params ~w(from id_message)a
 
   schema "consumer_message_indexes" do
-    field :topic, :string
-    field :partition, :integer
+    field :from, :string
     field :id_message, :integer
     timestamps
   end

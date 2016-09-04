@@ -8,8 +8,10 @@ defmodule WokAsyncMessageHandler.Helpers.TestMessageSpec do
         :wok_msg, {
           :message, 
           "6a79129d-0990-46cb-9b89-893c48bf2173", 
-          "somewhere/inthe/system", 
-          "user", %{}, %{message_id: 1}, 
+          "to_bot",
+          "from_bot", 
+          %{}, 
+          %{message_id: 23}, 
           "[{\"version\":1,\"payload\":{\"name\":\"bob\",\"age\":69}}]"
         }, 
         {:wok_msg_resp, false, :undefined, :undefined, :undefined, "" }, 
@@ -26,10 +28,10 @@ defmodule WokAsyncMessageHandler.Helpers.TestMessageSpec do
     } 
 
     let :payload, do: %{"name" => "bob", "age" => 69}
-    let :to, do: "somewhere/inthe/system"
+    let :from, do: "from_bot"
 
     before do: allow(Ecto.UUID).to accept(:generate, fn() -> "6a79129d-0990-46cb-9b89-893c48bf2173" end)
 
-    it do: expect(described_module.build_event_message(payload, to)).to eq(expected_message)
+    it do: expect(described_module.build_event_message(payload, from, 23)).to eq(expected_message)
   end
 end

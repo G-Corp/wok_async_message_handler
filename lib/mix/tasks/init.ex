@@ -106,13 +106,11 @@ generate messages controller to consume events from kafka:
 
     def change do
       create table(:consumer_message_indexes) do
-        add :topic, :string, null: false
-        add :partition, :integer, null: false
         add :id_message, :integer, null: false
+        add :from, :string, null: false
         timestamps
       end
-      create index(:consumer_message_indexes, [:partition])
-      create index(:consumer_message_indexes, [:topic])
+      create index(:consumer_message_indexes, [:from])
     end
   end
   """
