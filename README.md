@@ -112,7 +112,7 @@ config :wok_async_message_handler, prod: true
 
 12. Use helpers for your tests to generate fake messages for your messages controllers:  
 ```
-WokAsyncMessageHandler.Helpers.TestMessage.build_event_message(%{id: 123, ...}, "from_bot")
+WokAsyncMessageHandler.Helpers.TestMessage.build_event_message(%{id: 123, ...}, "from_bot", 1)
 ```
 
 that's it! You now can produce and consume messages.

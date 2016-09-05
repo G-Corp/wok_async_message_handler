@@ -108,11 +108,11 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       Wok.Message.noreply(event)
     end
 
-    defp message_not_already_processed?(controller, event) do
+    def message_not_already_processed?(controller, event) do
       Wok.Message.headers(event).message_id > find_last_processed_message_id(controller, event)
     end
 
-    defp update_consumer_message_index_ets(consumer_message_index) do
+    def update_consumer_message_index_ets(consumer_message_index) do
       true = :ets.insert(@indexes_ets_table, {consumer_message_index.from, consumer_message_index})
     end
 
@@ -121,7 +121,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       struct
     end
 
-    defp update_consumer_message_index(controller, event) do
+    def update_consumer_message_index(controller, event) do
       from = Wok.Message.from(event)
       message_id = Wok.Message.headers(event).message_id
       struct = get_consumer_message_index_ets(from)
@@ -155,7 +155,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       last_processed_message_id
     end
 
-    defp record_and_payload_from_event(controller, event) do
+    def record_and_payload_from_event(controller, event) do
       payload = expected_version_of_payload(event, controller.message_version)
       if controller.master_key != nil do
         controller.datastore.get_by(
@@ -171,7 +171,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       end
     end
 
-    defp expected_version_of_payload(message, version) do
+    def expected_version_of_payload(message, version) do
       Wok.Message.body(message)
       |> log_message(Wok.Message.to(message))
       |> Poison.decode!
@@ -184,7 +184,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       body
     end
 
-    defp map_payload_to_attributes(payload, atom_changeset) do
+    def map_payload_to_attributes(payload, atom_changeset) do
       for {key, val} <- payload, into: %{} do
         {Map.get(atom_changeset, key, String.to_atom(key)), val}
       end
