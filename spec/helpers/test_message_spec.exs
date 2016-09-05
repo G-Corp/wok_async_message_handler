@@ -17,8 +17,8 @@ defmodule WokAsyncMessageHandler.Helpers.TestMessageSpec do
         {:wok_msg_resp, false, :undefined, :undefined, :undefined, "" }, 
         :undefined, :undefined, :undefined
       }, 
-      1, 
-      "bots_events", 
+      999, 
+      "my_topic", 
       :undefined, 
       :undefined, 
       :undefined, 
@@ -32,6 +32,6 @@ defmodule WokAsyncMessageHandler.Helpers.TestMessageSpec do
 
     before do: allow(Ecto.UUID).to accept(:generate, fn() -> "6a79129d-0990-46cb-9b89-893c48bf2173" end)
 
-    it do: expect(described_module.build_event_message(payload, from, 23)).to eq(expected_message)
+    it do: expect(described_module.build_event_message(payload, from, 23, 999, "my_topic")).to eq(expected_message)
   end
 end

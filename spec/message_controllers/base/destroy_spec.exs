@@ -14,7 +14,10 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.DestroySpec do
 
   describe "#destroy" do
     let! :from_bot, do: "from_bot"
-    let! :cmi, do: Repo.insert!(%ConsumerMessageIndex{from: from_bot, id_message: 10})
+    let! :topic, do: "topic"
+    let! :partition, do: 1
+    let! :ets_key, do: Helpers.build_ets_key(from_bot, topic, partition)
+    let! :cmi, do: Repo.insert!(%ConsumerMessageIndex{from: from_bot, id_message: 10, partition: partition, topic: topic})
     let! :resource_to_delete, do: Repo.insert!(%StoppedPartition{topic: "my_topic", partition: 12, message_id: 9999, error: "no_error..."})
     let! :payload, do: %{id: resource_to_delete.id}
     
@@ -37,7 +40,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.DestroySpec do
 
       context "with id_message already in ets" do
         before do: allow(Repo).to accept(:one)
-        before do: true = :ets.insert(:botsunit_wok_consumers_message_index, {from_bot, cmi})
+        before do: true = :ets.insert(:botsunit_wok_consumers_message_index, {ets_key, cmi})
         before do
           {:shared, result: TestMessageController.destroy(event)}
         end
@@ -52,7 +55,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.DestroySpec do
     context "when message has not yet been processed" do
       context "with id_message already in ets" do
         before do: allow(Repo).to accept(:one)
-        before do: true = :ets.insert(:botsunit_wok_consumers_message_index, {from_bot, cmi})
+        before do: true = :ets.insert(:botsunit_wok_consumers_message_index, {ets_key, cmi})
 
         context "payload id does not match with a resource id" do
           let! :payload, do: %{id: 12345}
@@ -81,8 +84,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.DestroySpec do
             it do: expect(StoppedPartition |> Repo.all |> Enum.count ).to eq(0)
             it do: expect(TestMessageController).to accepted(:test_callback, :any, count: 1)
             it do: expect(Repo.get(ConsumerMessageIndex, cmi.id).id_message).to eq(11)
-            it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, from_bot))
-                   .to eq([{from_bot, Repo.get(ConsumerMessageIndex, cmi.id)}])
+            it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, ets_key))
+                   .to eq([{ets_key, Repo.get(ConsumerMessageIndex, cmi.id)}])
           end
 
           context "when using another field as id to find the message" do
@@ -94,8 +97,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.DestroySpec do
             it do: expect(Repo).to accepted(:one, :any, count: 0)
             it do: expect(StoppedPartition |> Repo.all |> Enum.count ).to eq(0)
             it do: expect(Repo.get(ConsumerMessageIndex, cmi.id).id_message).to eq(11)
-            it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, from_bot))
-                   .to eq([{from_bot, Repo.get(ConsumerMessageIndex, cmi.id)}])
+            it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, ets_key))
+                   .to eq([{ets_key, Repo.get(ConsumerMessageIndex, cmi.id)}])
           end
 
           context "when delete fails" do
@@ -113,8 +116,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.DestroySpec do
             it do: expect(StoppedPartition |> Repo.all |> Enum.count ).to eq(1)
             it do: expect(shared.fresh_cmi.id_message).to eq(10)
             it do: expect(TestMessageController).to accepted(:test_callback, :any, count: 0)
-            it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, from_bot))
-                    .to eq([{from_bot, shared.fresh_cmi}])
+            it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, ets_key))
+                    .to eq([{ets_key, shared.fresh_cmi}])
             it do: expect(String.match?(shared.exception.message, ~r/Wok Async Message Handler Exception @destroy$/))
           end
 
@@ -132,8 +135,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.DestroySpec do
             end
             it do: expect(StoppedPartition |> Repo.all |> Enum.count ).to eq(1)
             it do: expect(shared.fresh_cmi.id_message).to eq(10)
-            it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, from_bot))
-                   .to eq([{from_bot, shared.fresh_cmi}])
+            it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, ets_key))
+                   .to eq([{ets_key, shared.fresh_cmi}])
             it do: expect(String.match?(shared.exception.message, ~r/Wok Async Message Handler Exception @destroy$/))
           end
         end

@@ -113,18 +113,21 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
     end
 
     def update_consumer_message_index_ets(consumer_message_index) do
-      true = :ets.insert(@indexes_ets_table, {consumer_message_index.from, consumer_message_index})
+      true = :ets.insert(@indexes_ets_table, {build_ets_key(consumer_message_index), consumer_message_index})
     end
 
-    defp get_consumer_message_index_ets(from) do
-      [{^from, struct}] = :ets.lookup(@indexes_ets_table, from)
+    defp get_consumer_message_index_ets(ets_key) do
+      [{^ets_key, struct}] = :ets.lookup(@indexes_ets_table, ets_key)
       struct
     end
 
     def update_consumer_message_index(controller, event) do
+      topic = message_transfert(event, :topic)
+      partition = message_transfert(event, :partition)
       from = Wok.Message.from(event)
+      ets_key = build_ets_key(from, topic, partition)
       message_id = Wok.Message.headers(event).message_id
-      struct = get_consumer_message_index_ets(from)
+      struct = get_consumer_message_index_ets(ets_key)
       case ConsumerMessageIndex.changeset(struct, %{id_message: message_id})
            |> controller.datastore.update() do
         {:ok, updated_struct} -> updated_struct
@@ -134,22 +137,30 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       end
     end
 
+    def build_ets_key(from, topic, partition), do: "#{from}_#{topic}_#{partition}"
+    def build_ets_key(consumer_message_index) do
+      "#{consumer_message_index.from}_#{consumer_message_index.topic}_#{consumer_message_index.partition}"
+    end
+
     defp find_last_processed_message_id(controller, event) do
+      topic = message_transfert(event, :topic)
+      partition = message_transfert(event, :partition)
       from = Wok.Message.from(event)
+      ets_key = build_ets_key(from, topic, partition)
       last_processed_message_id =
-        case :ets.lookup(@indexes_ets_table, from) do
+        case :ets.lookup(@indexes_ets_table, ets_key) do
           [] ->
-            case from(c in ConsumerMessageIndex, where: [from: ^from])
+            case from(c in ConsumerMessageIndex, where: [from: ^from, topic: ^topic, partition: ^partition])
                  |> controller.datastore.one do
               nil ->
-                struct = controller.datastore.insert!(%ConsumerMessageIndex{from: from, id_message: -1})
+                struct = controller.datastore.insert!(%ConsumerMessageIndex{from: from, partition: partition, topic: topic, id_message: -1})
                 update_consumer_message_index_ets(struct)
                 struct.id_message
               struct ->
                 update_consumer_message_index_ets(struct)
                 struct.id_message
             end
-          [{^from, struct}] ->
+          [{^ets_key, struct}] ->
             struct.id_message
         end
       last_processed_message_id

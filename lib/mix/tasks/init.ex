@@ -29,6 +29,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
     end
 
     generate_migration_for_cmi_with_from_index(migrations_path, host_app_main_repo)
+    generate_migration_for_cmi_add_partition_and_topic(migrations_path, host_app_main_repo)
 
     default_service = Path.join(["lib", app_name, "wok"])
     create_directory(default_service)
@@ -64,6 +65,14 @@ generate messages controller to consume events from kafka:
     unless file_exists?(migrations_path, "*_cmi_with_from.exs") do
       file = Path.join(migrations_path, "#{timestamp()}_cmi_with_from.exs")
       create_file file, cmi_from_update_template([host_app_main_repo: host_app_main_repo])
+      :timer.sleep(1000)
+    end
+  end
+
+  defp generate_migration_for_cmi_add_partition_and_topic(migrations_path, host_app_main_repo) do
+    unless file_exists?(migrations_path, "*_cmi_add_partition_and_topic.exs") do
+      file = Path.join(migrations_path, "#{timestamp()}_cmi_add_partition_and_topic.exs")
+      create_file file, cmi_add_partition_and_topic_template([host_app_main_repo: host_app_main_repo])
       :timer.sleep(1000)
     end
   end
@@ -141,7 +150,7 @@ generate messages controller to consume events from kafka:
   """
 
   embed_template :cmi_from_update, """
-  defmodule <%= inspect @host_app_main_repo %>.Migrations.AddConsumerMessageIndexes do
+  defmodule <%= inspect @host_app_main_repo %>.Migrations.CmiFromUpdate do
     use Ecto.Migration
 
     def change do
@@ -151,6 +160,21 @@ generate messages controller to consume events from kafka:
         remove :partition
       end
       create index(:consumer_message_indexes, [:from])
+    end
+  end
+  """
+
+  embed_template :cmi_add_partition_and_topic, """
+  defmodule <%= inspect @host_app_main_repo %>.Migrations.CmiWithPartitionAndTopic do
+    use Ecto.Migration
+
+    def change do
+      alter table(:consumer_message_indexes) do
+        add :partition, :integer, null: false
+        add :topic, :string, null: false
+      end
+      create index(:consumer_message_indexes, [:partition])
+      create index(:consumer_message_indexes, [:topic])
     end
   end
   """

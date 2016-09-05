@@ -22,11 +22,11 @@ Record.defrecord(:message,
  )
  )
 
- def build_event_message(payload, from, message_id) do
+ def build_event_message(payload, from, message_id, partition \\ 1, topic \\ "topic") do
    message_transfert(
      message: build_message(payload, from, message_id),
-     partition: 1,
-     topic: "bots_events"
+     partition: partition,
+     topic: topic
    )
  end
 
