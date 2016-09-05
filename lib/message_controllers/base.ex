@@ -168,7 +168,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
 
     def record_and_payload_from_event(controller, event) do
       payload = expected_version_of_payload(event, controller.message_version)
-      if controller.master_key != nil do
+      if !is_nil(controller.master_key) do
         controller.datastore.get_by(
           controller.model,
           [{elem(controller.master_key, 0), payload[elem(controller.master_key, 1)]}]
