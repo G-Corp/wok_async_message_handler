@@ -179,6 +179,22 @@ generate messages controller to consume events from kafka:
   end
   """
 
+  embed_template :cmi_add_partition_and_topic, """
+  defmodule <%= inspect @host_app_main_repo %>.Migrations.CmiWithPartitionAndTopic do
+    use Ecto.Migration
+
+    def change do
+      <%= inspect @host_app_main_repo %>.delete_all(WokAsyncMessageHandler.Models.ConsumerMessageIndex)
+      alter table(:consumer_message_indexes) do
+        add :partition, :integer, null: false
+        add :topic, :string, null: false
+      end
+      create index(:consumer_message_indexes, [:partition])
+      create index(:consumer_message_indexes, [:topic])
+    end
+  end
+  """
+
   defp file_exists?(migrations_path, globe) do
     [] != migrations_path |> Path.join(globe) |> Path.wildcard
   end
