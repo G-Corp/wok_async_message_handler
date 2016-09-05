@@ -88,11 +88,11 @@ MyApp.MyAppEctoSchema
 
 7. add the creation of WokAsyncMessageHandler.MessageControllers.Base.Helpers.ets_table to your app file :  
 ```
-:ets.new(WokAsyncMessageHandler.MessageControllers.Base.Helpers.ets_table, [:set, :public, :named_table])
+:ets.new(WokAsyncMessageHandler.MessageControllers.Base.Helpers.ets_table, [:set, :public, :named_table])  
 ```
-(ets table to store the last message_id processed as a cache)
-**this table needs to be created when your application starts, or before the first call to this table is done.**
-For an elixir project named MyApp, you can put it into the generated file lib/my_app.ex, into ```start``` method
+(ets table to store the last message_id processed as a cache)  
+**this table needs to be created when your application starts, or before the first call to this table is done.**  
+For an elixir project named MyApp, you can put it into the generated file lib/my_app.ex, into ```start``` method  
 
 8. generate a messages controller for a model :
 ```
@@ -121,12 +121,14 @@ end
 
 13. **for test only**, Use helpers for your tests to generate fake messages for your messages controllers:  
 ```
-WokAsyncMessageHandler.Helpers.TestMessage.build_event_message(%{id: 123, ...}, "from_bot", 1)
+WokAsyncMessageHandler.Helpers.TestMessage.build_event_message(%{id: 123, ...}, "from_bot", 1, 1, "topic")  
 ```
 arguments are:  
   - payload : map, your data  
-  - from : the sender of the event  
-  - message_id : the message id set into headers  
+  - from : string, sender of the event  
+  - message_id : integer, message id set into headers  
+  - partition : integer, broker partition id  
+  - topic : string, topic  
 
 
 that's it! You now can produce and consume messages.  
