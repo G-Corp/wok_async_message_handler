@@ -56,7 +56,6 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
     import Ecto.Query
     require Logger
     require Record
-    Record.defrecord :message_transfert, Record.extract(:message_transfert, from_lib: "wok_message_handler/include/wok_message_handler.hrl")
     alias WokAsyncMessageHandler.Models.ConsumerMessageIndex
     @indexes_ets_table :botsunit_wok_consumers_message_index
 
@@ -128,8 +127,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
     end
 
     def update_consumer_message_index(controller, event) do
-      topic = message_transfert(event, :topic)
-      partition = message_transfert(event, :partition)
+      topic = Wok.Message.topic(event)
+      partition = Wok.Message.partition(event)
       from = Wok.Message.from(event)
       ets_key = build_ets_key(from, topic, partition)
       message_id = Wok.Message.headers(event).message_id
@@ -149,8 +148,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
     end
 
     defp find_last_processed_message_id(controller, event) do
-      topic = message_transfert(event, :topic)
-      partition = message_transfert(event, :partition)
+      topic = Wok.Message.topic(event)
+      partition = Wok.Message.partition(event)
       from = Wok.Message.from(event)
       ets_key = build_ets_key(from, topic, partition)
       last_processed_message_id =
