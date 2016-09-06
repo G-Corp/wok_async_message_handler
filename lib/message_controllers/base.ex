@@ -35,6 +35,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       def on_update_after_update(struct), do: {:ok, struct}
       def on_destroy_before_delete(attributes), do: attributes
       def on_destroy_after_delete(struct), do: {:ok, struct}
+      def process_update(event), do: process_update(__MODULE__, event)
 
       defoverridable [
         on_create_after_insert: 1,
@@ -45,7 +46,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
         on_update_before_update: 1,
         create: 1,
         destroy: 1,
-        update: 1
+        update: 1,
+        process_update: 1
       ]
     end
   end
@@ -63,24 +65,28 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
     def do_update(controller, event) do
       if message_not_already_processed?(controller, event) do
         {:ok, consumer_message_index} = controller.datastore.transaction(fn() ->
-          {record, payload} = record_and_payload_from_event(controller, event)
-          attributes = map_payload_to_attributes(payload, controller.keys_mapping)
-                       |> controller.on_update_before_update()
-
-          controller.model.update_changeset(record, attributes)
-          |> controller.datastore.insert_or_update()
+          controller.process_update(event)
           |> case do
             {:ok, struct} ->
               {:ok, _} = controller.on_update_after_update(struct)
               update_consumer_message_index(controller, event)
             {:error, ecto_changeset} ->
-              Logger.warn "Unable to update #{inspect controller.model} with attributes #{inspect attributes}"
+              Logger.warn "Unable to update #{inspect controller.model} with event #{inspect event}@@ changeset : #{inspect ecto_changeset}"
               controller.datastore.rollback(ecto_changeset)
           end
         end)
         update_consumer_message_index_ets(consumer_message_index)
       end
       Wok.Message.noreply(event)
+    end
+
+    def process_update(controller, event) do
+      {record, payload} = record_and_payload_from_event(controller, event)
+      attributes = map_payload_to_attributes(payload, controller.keys_mapping)
+                   |> controller.on_update_before_update()
+
+      controller.model.update_changeset(record, attributes)
+      |> controller.datastore.insert_or_update()
     end
 
     def do_destroy(controller, event) do
