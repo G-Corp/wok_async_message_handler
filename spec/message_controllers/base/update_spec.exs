@@ -20,18 +20,6 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.UpdateSpec do
     end
   end
 
-  describe "#create", create: true do
-    let! :payload, do: %{id: 1, topic: "create", partition: 1, message_id: 1224, error: "new error"}
-    before do: allow(TestMessageController).to accept(:test_on_update_before_update)
-    before do: allow(TestMessageController).to accept(:test_on_update_after_update)
-    before do: {:shared, result: TestMessageController.create(unprocessed_event)}
-    it do: expect(shared.result).to eq(unprocessed_event)
-    it do: expect(StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
-           .to eq(%{error: "new error", message_id: 1224, partition: 1, topic: "create"})
-    it do: expect(TestMessageController).to accepted(:test_on_update_before_update, :any, count: 1)
-    it do: expect(TestMessageController).to accepted(:test_on_update_after_update, :any, count: 1)
-  end
-
   describe "#update", update: true do
     let! :payload, do: %{id: 12, topic: "topic bidon", partition: 1, message_id: 1224, error: "new error"}
 
@@ -64,8 +52,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.UpdateSpec do
     context "when message has not yet been processed" do
       context "with id_message already in ets" do
         before do: true = :ets.insert(:botsunit_wok_consumers_message_index, {ets_key, cmi})
-        before do: allow(TestMessageController).to accept(:test_on_update_before_update)
-        before do: allow(TestMessageController).to accept(:test_on_update_after_update)
+        before do: allow(TestMessageController).to accept(:test_before_update)
+        before do: allow(TestMessageController).to accept(:test_after_update)
 
         context "when insert in db is ok" do
           before do: {:shared, result: TestMessageController.update(unprocessed_event)}
@@ -74,8 +62,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.UpdateSpec do
           it do: expect(StoppedPartition |> Repo.all |> Enum.count).to eq(1)
           it do: expect(StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
                  .to eq(%{topic: "topic bidon", partition: 1, message_id: 1224, error: "new error"})
-          it do: expect(TestMessageController).to accepted(:test_on_update_before_update, :any, count: 1)
-          it do: expect(TestMessageController).to accepted(:test_on_update_after_update, :any, count: 1)
+          it do: expect(TestMessageController).to accepted(:test_before_update, :any, count: 1)
+          it do: expect(TestMessageController).to accepted(:test_after_update, :any, count: 1)
           it do: expect(Repo.get(ConsumerMessageIndex, cmi.id).id_message).to eq(402)
           it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, ets_key))
                  .to eq([{ets_key, Repo.get(ConsumerMessageIndex, cmi.id)}])
@@ -108,8 +96,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.UpdateSpec do
 
           it do: expect(ConsumerMessageIndex |> Repo.all |> Enum.count).to eq(1)
           it do: expect(StoppedPartition |> Repo.all |> Enum.count).to eq(0)
-          it do: expect(TestMessageController).to accepted(:test_on_update_before_update, :any, count: 1)
-          it do: expect(TestMessageController).to accepted(:test_on_update_after_update, :any, count: 0)
+          it do: expect(TestMessageController).to accepted(:test_before_update, :any, count: 1)
+          it do: expect(TestMessageController).to accepted(:test_after_update, :any, count: 0)
           it do: expect(Repo.get(ConsumerMessageIndex, cmi.id).id_message).to eq(401)
           it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, ets_key))
                  .to eq([{ets_key, Repo.get(ConsumerMessageIndex, cmi.id)}])

@@ -8,7 +8,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Controller do
     schema = OptionParser.parse(args) |> elem(0) |> Keyword.get(:schema)
     app_name = Mix.Project.config[:app] |> to_string
     app_module = app_name |> Macro.camelize
-    host_app_main_repo = Mix.Ecto.parse_repo([]) |> IO.inspect |> List.first
+    host_app_main_repo = Mix.Ecto.parse_repo([]) |> List.first
 
     opts = [app_module: app_module, repo: host_app_main_repo, schema: schema]
 

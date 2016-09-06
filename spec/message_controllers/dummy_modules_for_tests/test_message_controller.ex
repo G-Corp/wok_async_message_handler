@@ -6,26 +6,40 @@ defmodule TestMessageController do
   @master_key nil
   use WokAsyncMessageHandler.MessageControllers.Base
 
-  def on_destroy_after_delete(ecto_schema) do
+  def before_create(attributes) do
+    __MODULE__.test_before_create()
+    attributes
+  end
+
+  def test_before_create, do: nil
+
+  def after_create(struct) do
+    __MODULE__.test_after_create()
+    {:ok, struct}
+  end
+
+  def test_after_create, do: nil
+
+  def after_destroy(struct) do
     __MODULE__.test_callback()
-    {:ok, ecto_schema}
+    {:ok, struct}
   end
 
   def test_callback, do: :ok
 
-  def on_update_before_update(attributes) do
-    __MODULE__.test_on_update_before_update()
+  def before_update(attributes) do
+    __MODULE__.test_before_update()
     attributes
   end
 
-  def test_on_update_before_update, do: :ok
+  def test_before_update, do: :ok
 
-  def on_update_after_update(ecto_schema) do
-    __MODULE__.test_on_update_after_update()
-    {:ok, ecto_schema}
+  def after_update(struct) do
+    __MODULE__.test_after_update()
+    {:ok, struct}
   end
 
-  def test_on_update_after_update, do: :ok
+  def test_after_update, do: :ok
 end
 
 defmodule TestMessageControllerWithMasterKey do

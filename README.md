@@ -8,7 +8,7 @@
 
 * WokAsyncMessageHandler.MessagesEnqueuers.Ecto :  
 module (macro to "use") to enqueue messages in database using Ecto, for asynchonous send to kafka by wok producer  
-When you execute mix setup, a default enqueur "YourApp.Wok.Gateway" is created for your project.  
+When you execute mix setup, a default enqueuer "YourApp.Wok.Gateway" is created for your project.  
 A mix task allows to generate serializers for your ecto schema.  
 
 * WokAsyncMessageHandler.MessagesHandlers.Ecto :  
@@ -35,7 +35,7 @@ A mix task allows to generate controller for your ecto schema.
 ```
 mix wok_async_message_handler.init
 ```
-This will create 3 ecto migrations, a serializers folder and a default message enqueur :
+This will create 3 ecto migrations, a serializers folder and a default message enqueuer :
   - WokAsyncMessageHandler.Models.EctoProducerMessage :  
    store messages to send (3 fields : topic, partition, blob)
   - WokAsyncMessageHandler.Models.StoppedPartition :  
@@ -169,10 +169,27 @@ If you want you can add method in your controller to handle cutom events.
 
 You can use hooks in your controller. Just redefine these methods in your controller:  
 
-* ```def on_update_before_update(attributes), do: attributes```
-* ```def on_update_after_update(ecto_schema), do: {:ok, ecto_schema}```
-* ```def on_destroy_before_delete(attributes), do: attributes```
-* ```def on_destroy_after_delete(ecto_schema), do: {:ok, ecto_schema}```
+* ```def process_create(controller, event)```
+  * this method by default register the model into your database.
+  * It can return:
+  * {:ok, data} : data will be argument for after_create callback. By default it is the struct returned by ecto insert
+  * {:error, data} : will rollback the transaction and stop the bot. By default it is the changeset returned by ecto insert
+* ```def before_create(attributes)```
+  * if you use the default process_create function, you can redefine this function
+  * this callback is by default called INSIDE ```process_create``` and take the list of attributes from message as a %{key: value} map
+  * if you rewrite your own ```process_create```, this callback is no more called, except if you put it in your code again.
+* ```def after_create(data)```
+  * this callback is called OUTSIDE process_create (= always!) and take a data (by default the struct returned by ecto insert).
+  * By default, it just returns the struct.
+  * if you rewrite your own ```process_create```, this callback is still called.
+
+Others callbacks work the same way:
+
+* ```def process_update(controller, event)```
+* ```def before_update(attributes)```
+* ```def after_update(ecto_schema)```
+* ```def after_destroy(ecto_schema)```
+* for now, there are no ```before_destroy``` or ```process_destroy```
 
 **before** are called before the database update/delete and take the payload from the event as map.  
 It returns a map used as the schema data for sql query.  

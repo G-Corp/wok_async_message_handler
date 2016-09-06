@@ -16,13 +16,13 @@ defmodule WokAsyncMessageHandler.Models.StoppedPartition do
     timestamps
   end
 
-  def changeset(record, params \\ :invalid) do
+  def create_changeset(record, params \\ :invalid) do
     record
     |> cast(params, @accepted_params)
     |> validate_required(@required_params)
   end
 
   def update_changeset(record, params \\ :invalid) do
-    changeset(record, params)
+    create_changeset(record, params)
   end
 end

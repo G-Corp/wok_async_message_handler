@@ -11,7 +11,13 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       def keys_mapping, do: @keys_mapping
       def master_key, do: @master_key
 
-      def create(event), do: update(event)
+      def create(event) do
+        try do
+          do_create(__MODULE__, event)
+        rescue
+          e -> Exceptions.throw_exception(e, event, :create)
+        end
+      end
 
       def destroy(event) do
         try do
@@ -29,25 +35,27 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
         end
       end
 
-      def on_create_before_insert(attributes), do: attributes
-      def on_create_after_insert(struct), do: {:ok, struct}
-      def on_update_before_update(attributes), do: attributes
-      def on_update_after_update(struct), do: {:ok, struct}
-      def on_destroy_before_delete(attributes), do: attributes
-      def on_destroy_after_delete(struct), do: {:ok, struct}
+      def before_create(attributes), do: attributes
+      def process_create(event), do: process_create(__MODULE__, event)
+      def after_create(struct), do: {:ok, struct}
+      def before_update(attributes), do: attributes
       def process_update(event), do: process_update(__MODULE__, event)
+      def after_update(struct), do: {:ok, struct}
+      def before_destroy(attributes), do: attributes
+      def after_destroy(struct), do: {:ok, struct}
 
       defoverridable [
-        on_create_after_insert: 1,
-        on_create_before_insert: 1,
-        on_destroy_before_delete: 1,
-        on_destroy_after_delete: 1,
-        on_update_after_update: 1,
-        on_update_before_update: 1,
+        after_create: 1,
+        before_create: 1,
+        before_destroy: 1,
+        after_destroy: 1,
+        after_update: 1,
+        before_update: 1,
         create: 1,
         destroy: 1,
         update: 1,
-        process_update: 1
+        process_update: 1,
+        process_create: 1
       ]
     end
   end
@@ -62,13 +70,40 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
 
     def ets_table, do: @indexes_ets_table
 
+    def do_create(controller, event) do
+      if message_not_already_processed?(controller, event) do
+        {:ok, consumer_message_index} = controller.datastore.transaction(fn() ->
+          controller.process_create(event)
+          |> case do
+            {:ok, struct} ->
+              {:ok, _} = controller.after_create(struct)
+              update_consumer_message_index(controller, event)
+            {:error, ecto_changeset} ->
+              Logger.warn "Unable to create #{inspect controller.model} with event #{inspect event}@@ changeset : #{inspect ecto_changeset}"
+              controller.datastore.rollback(ecto_changeset)
+          end
+        end)
+        update_consumer_message_index_ets(consumer_message_index)
+      end
+      Wok.Message.noreply(event)
+    end
+
+    def process_create(controller, event) do
+      {record, payload} = record_and_payload_from_event(controller, event)
+      attributes = map_payload_to_attributes(payload, controller.keys_mapping)
+                   |> controller.before_create()
+
+      controller.model.create_changeset(record, attributes)
+      |> controller.datastore.insert_or_update()
+    end
+
     def do_update(controller, event) do
       if message_not_already_processed?(controller, event) do
         {:ok, consumer_message_index} = controller.datastore.transaction(fn() ->
           controller.process_update(event)
           |> case do
             {:ok, struct} ->
-              {:ok, _} = controller.on_update_after_update(struct)
+              {:ok, _} = controller.after_update(struct)
               update_consumer_message_index(controller, event)
             {:error, ecto_changeset} ->
               Logger.warn "Unable to update #{inspect controller.model} with event #{inspect event}@@ changeset : #{inspect ecto_changeset}"
@@ -83,7 +118,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
     def process_update(controller, event) do
       {record, payload} = record_and_payload_from_event(controller, event)
       attributes = map_payload_to_attributes(payload, controller.keys_mapping)
-                   |> controller.on_update_before_update()
+                   |> controller.before_update()
 
       controller.model.update_changeset(record, attributes)
       |> controller.datastore.insert_or_update()
@@ -101,7 +136,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
               Logger.info "Destroying #{inspect controller.model} with id #{record.id}"
               case controller.datastore.delete(record) do
                 {:ok, struct} ->
-                  {:ok, _} = controller.on_destroy_after_delete(struct)
+                  {:ok, _} = controller.after_destroy(struct)
                   update_consumer_message_index(controller, event)
                 {:error, ecto_changeset} ->
                   Logger.info "Unable to destroy #{inspect controller.model} with id #{record.id}"
