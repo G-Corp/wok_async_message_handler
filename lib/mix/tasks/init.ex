@@ -190,8 +190,6 @@ generate messages controller to consume events from kafka:
       alter table(:consumer_message_indexes) do
         modify :id_message, :int8
       end
-      create index(:consumer_message_indexes, [:partition])
-      create index(:consumer_message_indexes, [:topic])
     end
   end
   """
