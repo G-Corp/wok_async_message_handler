@@ -30,6 +30,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Init do
 
     generate_migration_for_cmi_with_from_index(migrations_path, host_app_main_repo)
     generate_migration_for_cmi_add_partition_and_topic(migrations_path, host_app_main_repo)
+    generate_migration_for_cmi_usebigint(migrations_path, host_app_main_repo)
 
     default_service = Path.join(["lib", app_name, "wok"])
     create_directory(default_service)
@@ -75,6 +76,15 @@ generate messages controller to consume events from kafka:
       create_file file, cmi_add_partition_and_topic_template([host_app_main_repo: host_app_main_repo])
       :timer.sleep(1000)
     end
+  end
+
+  defp generate_migration_for_cmi_usebigint(migrations_path, host_app_main_repo) do
+    unless file_exists?(migrations_path, "*_cmi_use_big_int.exs") do
+      file = Path.join(migrations_path, "#{timestamp()}_cmi_use_big_int.exs")
+      create_file file, cmi_add_partition_and_topic_template([host_app_main_repo: host_app_main_repo])
+      :timer.sleep(1000)
+    end
+
   end
 
   defp timestamp do
@@ -181,7 +191,7 @@ generate messages controller to consume events from kafka:
   end
   """
 
-  embed_template :use_big_int, """
+  embed_template :cmi_use_big_int, """
   defmodule <%= inspect @host_app_main_repo %>.Migrations.CMIUseBigInt do
     use Ecto.Migration
 
