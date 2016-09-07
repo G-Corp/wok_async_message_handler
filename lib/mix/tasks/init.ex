@@ -220,6 +220,10 @@ generate messages controller to consume events from kafka:
       alter table(:ecto_producer_messages) do
         modify :id, :int8
       end
+
+      alter table(:stopped_partitions) do
+        modify :message_id, :int8
+      end
     end
   end
   """
