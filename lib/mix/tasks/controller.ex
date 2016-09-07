@@ -22,7 +22,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Controller do
   embed_template :controller, """
   defmodule <%= @app_module %>.MessageControllers.<%= @schema %>Controller do
     @message_version 1 # handled message version
-    @datastore <%= @repo %> # repo for your resource
+    @datastore <%= inspect @repo %> # repo for your resource
     @model <%= @schema %> # Resource you will receive messages for
     @keys_mapping %{} # Map to remap fields name between messages and your db schema : %{"a" -> :b} will remap "a" found in your message to attribute :b. It's always "string" to "atom".
     @master_key nil # a tuple {:db_field, "message_key"}. if not nil, will be used by update and delete to find record 'where [db_field] = [message.message_key]'
