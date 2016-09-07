@@ -213,7 +213,7 @@ generate messages controller to consume events from kafka:
   """
 
   embed_template :epm_bigint, """
-  defmodule <%= inspect @host_app_main_repo %>.Migrations.EpmUseBigInt do
+  defmodule <%= inspect @host_app_main_repo %>.Migrations.EpmBigInt do
     use Ecto.Migration
 
     def change do
