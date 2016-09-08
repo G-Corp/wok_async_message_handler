@@ -8,7 +8,7 @@
   "espec": {:hex, :espec, "0.8.28", "f002710673d215876c4ca6fc74cbf5e330954badea7389d2284d2050940f1779", [:mix], [{:meck, "~> 0.8.4", [hex: :meck, optional: false]}]},
   "goldrush": {:hex, :goldrush, "0.1.8", "2024ba375ceea47e27ea70e14d2c483b2d8610101b4e852ef7f89163cdb6e649", [:rebar3], []},
   "jsx": {:hex, :jsx, "2.8.0", "749bec6d205c694ae1786d62cea6cc45a390437e24835fd16d12d74f07097727", [:mix, :rebar], []},
-  "kafe": {:git, "https://github.com/botsunit/kafe.git", "dbc3122e3c5b170d6d3fddc0e6cebcef80b27c28", [branch: "master"]},
+  "kafe": {:git, "https://github.com/botsunit/kafe.git", "e1f3ee6ca9b5c3be54f7a5ed2ae6f33dba380bee", [branch: "master"]},
   "lager": {:hex, :lager, "3.2.1", "eef4e18b39e4195d37606d9088ea05bf1b745986cf8ec84f01d332456fe88d17", [:rebar3], [{:goldrush, "0.1.8", [hex: :goldrush, optional: false]}]},
   "lager_json_formatter": {:git, "https://github.com/botsunit/lager_json_formatter.git", "d1ed3ec29052fcbe5602bd9603fff2eee78660fe", [tag: "0.1.0"]},
   "meck": {:hex, :meck, "0.8.4", "59ca1cd971372aa223138efcf9b29475bde299e1953046a0c727184790ab1520", [:rebar, :make], []},
@@ -18,5 +18,5 @@
   "poolgirl": {:git, "https://github.com/botsunit/poolgirl.git", "d0a1872e346f5866ecf90620b074f458540208e5", [branch: "master"]},
   "postgrex": {:hex, :postgrex, "0.11.2", "139755c1359d3c5c6d6e8b1ea72556d39e2746f61c6ddfb442813c91f53487e8", [:mix], [{:connection, "~> 1.0", [hex: :connection, optional: false]}, {:db_connection, "~> 1.0-rc", [hex: :db_connection, optional: false]}, {:decimal, "~> 1.0", [hex: :decimal, optional: false]}]},
   "uuid": {:git, "https://github.com/botsunit/erlang-uuid.git", "582cab69bdff5c56ca3907226ed7dca8663b5701", [tag: "0.6.0"]},
-  "wok": {:git, "git@gitlab.botsunit.com:msaas/wok.git", "f6126b2166dd3196c5d3b72be9301d83905f9047", [branch: "master"]},
+  "wok": {:git, "git@gitlab.botsunit.com:msaas/wok.git", "c2b3d2e6c3b6951122e30e93f5468f76c976b15f", [branch: "master"]},
   "wok_message_handler": {:git, "git@gitlab.botsunit.com:msaas/wok_message_handler.git", "26ad21c7fcaab8d6ff3fa66ddad5a9ee12d4a5ce", [branch: "master"]}}
