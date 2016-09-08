@@ -20,7 +20,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.DestroySpec do
     let! :cmi, do: Repo.insert!(%ConsumerMessageIndex{from: from_bot, id_message: 10, partition: partition, topic: topic})
     let! :resource_to_delete, do: Repo.insert!(%StoppedPartition{topic: "my_topic", partition: 12, message_id: 9999, error: "no_error..."})
     let! :payload, do: %{id: resource_to_delete.id}
-    
+
     context "when message has already been processed" do
       let! :event, do: TestMessage.build_event_message(payload, from_bot, 10)
       before do: allow(Repo).to accept(:get, fn(module, id) ->
@@ -75,7 +75,11 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.DestroySpec do
           context "when the whole transaction is ok" do
             let! :event, do: TestMessage.build_event_message(payload, from_bot, 11)
             before do
-              allow(TestMessageController).to accept(:test_callback)
+              resource_id = resource_to_delete.id
+              allow(TestMessageController).to accept(:test_callback, fn
+                (%{body: %{"version" => 1}, payload: %{"id" => ^resource_id}, record: %{id: ^resource_id}} = a) -> a
+                _ -> raise("SHOULD NOT HAPPEN")
+              end)
               {:shared, result: TestMessageController.destroy(event)}
             end
             it do: expect(shared.result).to eq(event)

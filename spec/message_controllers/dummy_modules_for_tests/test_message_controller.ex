@@ -21,7 +21,7 @@ defmodule TestMessageController do
   def test_after_create, do: nil
 
   def after_destroy(struct) do
-    __MODULE__.test_callback()
+    __MODULE__.test_callback(struct)
     {:ok, struct}
   end
 

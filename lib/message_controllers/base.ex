@@ -35,14 +35,15 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
         end
       end
 
-      def before_create(attributes), do: attributes
+      def before_create(event_data), do: event_data
       def process_create(event), do: process_create(__MODULE__, event)
-      def after_create(struct), do: {:ok, struct}
-      def before_update(attributes), do: attributes
+      def after_create(event_data), do: {:ok, event_data}
+      def before_update(event_data), do: event_data
       def process_update(event), do: process_update(__MODULE__, event)
-      def after_update(struct), do: {:ok, struct}
-      def before_destroy(attributes), do: attributes
-      def after_destroy(struct), do: {:ok, struct}
+      def after_update(event_data), do: {:ok, event_data}
+      def before_destroy(event_data), do: event_data
+      def process_destroy(event), do: process_destroy(__MODULE__, event)
+      def after_destroy(event_data), do: {:ok, event_data}
 
       defoverridable [
         after_create: 1,
@@ -54,8 +55,9 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
         create: 1,
         destroy: 1,
         update: 1,
+        process_create: 1,
+        process_destroy: 1,
         process_update: 1,
-        process_create: 1
       ]
     end
   end
@@ -74,8 +76,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
         {:ok, consumer_message_index} = controller.datastore.transaction(fn() ->
           controller.process_create(event)
           |> case do
-            {:ok, struct} ->
-              {:ok, _} = controller.after_create(struct)
+            {:ok, event_data} ->
+              {:ok, _} = controller.after_create(event_data)
               update_consumer_message_index(controller, event)
             {:error, ecto_changeset} ->
               Logger.warn "Unable to create #{inspect controller.model} with event #{inspect event}@@ changeset : #{inspect ecto_changeset}"
@@ -88,12 +90,16 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
     end
 
     def process_create(controller, event) do
-      {record, payload} = record_and_payload_from_event(controller, event)
-      attributes = map_payload_to_attributes(payload, controller.keys_mapping)
+      event_data = record_and_body_from_event(controller, event)
+                   |> event_data_with_attributes(controller.keys_mapping)
                    |> controller.before_create()
 
-      controller.model.create_changeset(record, attributes)
+      controller.model.create_changeset(event_data.record, event_data.attributes)
       |> controller.datastore.insert_or_update()
+      |> case do
+        {:ok, struct} -> {:ok, Map.put(event_data, :record, struct)}
+        {:error, ecto_changeset} -> {:error, ecto_changeset}
+      end
     end
 
     def do_update(controller, event) do
@@ -101,8 +107,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
         {:ok, consumer_message_index} = controller.datastore.transaction(fn() ->
           controller.process_update(event)
           |> case do
-            {:ok, struct} ->
-              {:ok, _} = controller.after_update(struct)
+            {:ok, event_data} ->
+              {:ok, _} = controller.after_update(event_data)
               update_consumer_message_index(controller, event)
             {:error, ecto_changeset} ->
               Logger.warn "Unable to update #{inspect controller.model} with event #{inspect event}@@ changeset : #{inspect ecto_changeset}"
@@ -115,37 +121,57 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
     end
 
     def process_update(controller, event) do
-      {record, payload} = record_and_payload_from_event(controller, event)
-      attributes = map_payload_to_attributes(payload, controller.keys_mapping)
+      event_data = record_and_body_from_event(controller, event)
+                   |> event_data_with_attributes(controller.keys_mapping)
                    |> controller.before_update()
 
-      controller.model.update_changeset(record, attributes)
+      controller.model.update_changeset(event_data.record, event_data.attributes)
       |> controller.datastore.insert_or_update()
+      |> case do
+        {:ok, struct} -> {:ok, Map.put(event_data, :record, struct)}
+        {:error, ecto_changeset} -> {:error, ecto_changeset}
+      end
+    end
+
+    def event_data_with_attributes(event_data, atom_changeset) do
+      attributes = for {key, val} <- event_data.payload, into: %{} do
+                    {Map.get(atom_changeset, key, String.to_atom(key)), val}
+                   end
+      Map.put(event_data, :attributes, attributes)
     end
 
     def do_destroy(controller, event) do
       if message_not_already_processed?(controller, event) do
         {:ok, consumer_message_index} = controller.datastore.transaction(fn() ->
-          {record, _payload} = record_and_payload_from_event(controller, event)
-          case Map.get(record.__meta__, :state) do
-            :built ->
-              Logger.warn "No match for destroyed #{inspect controller.model} with id #{record.id}"
+          controller.process_destroy(event)
+          |> case do
+            {:ok, event_data} ->
+              {:ok, _} = controller.after_destroy(event_data)
               update_consumer_message_index(controller, event)
-            :loaded ->
-              Logger.info "Destroying #{inspect controller.model} with id #{record.id}"
-              case controller.datastore.delete(record) do
-                {:ok, struct} ->
-                  {:ok, _} = controller.after_destroy(struct)
-                  update_consumer_message_index(controller, event)
-                {:error, ecto_changeset} ->
-                  Logger.info "Unable to destroy #{inspect controller.model} with id #{record.id}"
-                  controller.datastore.rollback(ecto_changeset)
-              end
+            {:error, ecto_changeset} ->
+              Logger.info "Unable to destroy #{inspect controller.model} in event #{inspect event}@@#{inspect ecto_changeset}"
+              controller.datastore.rollback(ecto_changeset)
           end
         end)
         update_consumer_message_index_ets(consumer_message_index)
       end
       Wok.Message.noreply(event)
+    end
+
+    def process_destroy(controller, event) do
+      event_data = record_and_body_from_event(controller, event, false)
+                   |> controller.before_destroy()
+      case event_data.record do
+        nil ->
+          Logger.warn "No match for destroyed #{inspect controller.model} in event #{inspect event}"
+          {:ok, event_data}
+        _ ->
+          Logger.info "Destroying #{inspect controller.model} with id #{event_data.record.id}"
+          case controller.datastore.delete(event_data.record) do
+            {:ok, struct} -> {:ok, Map.put(event_data, :record, struct)}
+            {:error, ecto_changeset} -> {:error, ecto_changeset}
+          end
+      end
     end
 
     def message_not_already_processed?(controller, event) do
@@ -206,8 +232,9 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       last_processed_message_id
     end
 
-    def record_and_payload_from_event(controller, event) do
-      payload = expected_version_of_payload(event, controller.message_version)
+    def record_and_body_from_event(controller, event, return_record \\ true) do
+      body = expected_version_of_body(event, controller.message_version)
+      payload = Map.get(body, "payload", :no_payload)
       if !is_nil(controller.master_key) do
         controller.datastore.get_by(
           controller.model,
@@ -217,28 +244,25 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
         controller.datastore.get(controller.model, payload["id"])
       end
       |> case do
-        nil -> {struct(controller.model), payload}
-        record -> {record, payload}
+        nil -> %{
+          body: body, 
+          payload: payload, 
+          record: (if return_record, do: struct(controller.model, new: true), else: nil)
+        }
+        struct -> %{body: body, payload: payload, record: struct}
       end
     end
 
-    def expected_version_of_payload(message, version) do
+    def expected_version_of_body(message, version) do
       Wok.Message.body(message)
       |> log_message(Wok.Message.to(message))
       |> Poison.decode!
       |> Enum.find(&(&1["version"] == version))
-      |> Map.get("payload", :no_payload)
     end
 
     defp log_message(body, to) do
       Logger.info "Message received: #{to} #{body}"
       body
-    end
-
-    def map_payload_to_attributes(payload, atom_changeset) do
-      for {key, val} <- payload, into: %{} do
-        {Map.get(atom_changeset, key, String.to_atom(key)), val}
-      end
     end
   end
 end
