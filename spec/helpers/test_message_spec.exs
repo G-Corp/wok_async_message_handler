@@ -18,7 +18,7 @@ defmodule WokAsyncMessageHandler.Helpers.TestMessageSpec do
           "from_bot", 
           %{}, 
           %{message_id: 23}, 
-          "[{\"version\":1,\"payload\":{\"name\":\"bob\",\"age\":69},\"metadata\":{}}]"
+          "[{\"version\":1,\"payload\":{\"name\":\"bob\",\"age\":69}}]"
         }, 
         {:wok_msg_resp, false, :undefined, :undefined, :undefined, "" }, 
         :undefined, :undefined, :undefined

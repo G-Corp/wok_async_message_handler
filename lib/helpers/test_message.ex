@@ -44,10 +44,9 @@ defmodule WokAsyncMessageHandler.Helpers.TestMessage do
   end
 
   defp build_message_body(payload, options) do
-    [%{
-        version: Keyword.get(options, :version, 1),
-        payload: payload,
-        metadata: Keyword.get(options, :metadata, %{})
-      }] |> Poison.encode!
+    body = %{version: Keyword.get(options, :version, 1), payload: payload}
+    metadata = Keyword.get(options, :metadata, nil)
+    unless is_nil(metadata), do: body = Map.put(body, :metadata, metadata)
+    Poison.encode! [body]
   end
 end
