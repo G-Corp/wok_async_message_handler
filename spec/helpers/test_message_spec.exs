@@ -1,6 +1,24 @@
 defmodule WokAsyncMessageHandler.Helpers.TestMessageSpec do 
   use ESpec
 
+  describe "#payload_to_wok_message" do
+    before do: allow(:kafe).to accept(:partitions, fn(_) -> [0] end)
+    it do: expect(described_module.payload_to_wok_message(
+            "topic", 
+            "key", 
+            "from", 
+            "to", 
+            %{version: 1, payload: %{k: "v"}}
+           ))
+           .to eq("g2gGZAAHd29rX21zZ2gHZAAHbWVzc2FnZWQACXVuZGVmaW5"
+            <> "lZGQACXVuZGVmaW5lZGQACXVuZGVmaW5lZHQAAAAAZAAJdW5kZ"
+            <> "WZpbmVkZAAJdW5kZWZpbmVkaAZkAAx3b2tfbXNnX3Jlc3BkAAR0"
+            <> "cnVlbQAAAARmcm9tbQAAAAJ0b20AAAAFdG9waWNtAAAAI1t7InZl"
+            <> "cnNpb24iOjEsInBheWxvYWQiOnsiayI6InYifX1dZAAJdW5kZWZp"
+            <> "bmVkZAAJdW5kZWZpbmVkZAAJdW5kZWZpbmVk")
+
+  end
+
   describe "#build_event_message" do
 
     let :payload, do: %{"name" => "bob", "age" => 69}

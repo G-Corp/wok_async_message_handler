@@ -11,14 +11,20 @@ defmodule WokAsyncMessageHandler.MessagesHandlers.Ecto do
   def messages(topic, partition, number_of_messages) do
     case Application.ensure_started(:ecto) do
       :ok ->
-        Doteki.get_env([:wok_async_message_handler, :messages_repo])
-              .all(from pm in EctoProducerMessage, 
-                   limit: ^number_of_messages, 
-                   where: pm.topic == ^topic 
-                      and pm.partition == ^partition,
-                   order_by: pm.id)
-        |> Enum.map(fn(message) -> {message.id, topic, partition, message.blob} end)
-
+        try do
+          Doteki.get_env([:wok_async_message_handler, :messages_repo])
+                .all(from pm in EctoProducerMessage, 
+                     limit: ^number_of_messages, 
+                     where: pm.topic == ^topic 
+                        and pm.partition == ^partition,
+                     order_by: pm.id)
+          |> Enum.map(fn(message) -> {message.id, topic, partition, message.blob} end)
+        rescue
+          e ->
+            Logger.warn("WokAsyncMessageHandler.MessagesHandlers.Ecto : exception #{inspect e.message}. Rseturn empty list of messages to produce.")
+            :timer.sleep(1000) # to prevent DB spamming in case of troubles
+            []
+        end
       _ ->
         Logger.warn("WokAsyncMessageHandler.MessagesHandlers.Ecto : ecto not started ? return empty list of messages to produce.")
         :timer.sleep(1000) # to prevent DB spamming in case of troubles

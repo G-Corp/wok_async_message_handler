@@ -20,12 +20,13 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
      it do: expect(shared.message.blob)
             .to eq(
               Wok.Message.encode_message(
-                                          {"realtime_topic", "my_session_id"},
-                                          "from_bot",
-                                          "from_bot/real_time/notify",
-                                          "[{\"version\":1,\"payload\":{\"source\":\"from_bot\",\"session_id\":\"my_session_id\"}}]"
-                                          ) |> elem(3)
-                                        )
+                {"realtime_topic", "my_session_id"},
+                "from_bot",
+                "from_bot/real_time/notify",
+                "[{\"version\":1,\"payload\":{\"source\":\"from_bot\",\"session_id\":\"my_session_id\"}}]"
+              )
+              |> elem(3)
+            )
     end
 
     context "when storage error" do

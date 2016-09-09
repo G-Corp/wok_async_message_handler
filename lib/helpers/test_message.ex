@@ -49,4 +49,14 @@ defmodule WokAsyncMessageHandler.Helpers.TestMessage do
     unless is_nil(metadata), do: body = Map.put(body, :metadata, metadata)
     Poison.encode! [body]
   end
+
+  def payload_to_wok_message(topic, key, from, to, body) do
+    Wok.Message.encode_message(
+      {topic, key},
+      from,
+      to,
+      [body] |> Poison.encode!
+    )
+    |> elem(3)
+  end
 end
