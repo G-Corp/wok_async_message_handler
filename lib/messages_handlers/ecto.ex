@@ -3,24 +3,24 @@ defmodule WokAsyncMessageHandler.MessagesHandlers.Ecto do
 
   alias WokAsyncMessageHandler.Models.EctoProducerMessage
   alias WokAsyncMessageHandler.Models.StoppedPartition
-  alias WokAsyncMessageHandler.Helpers.Exceptions
 
   require Logger
   import Ecto.Query
 
   @spec messages(String.t, integer, integer) :: list(tuple)
   def messages(topic, partition, number_of_messages) do
-    try do
-      Doteki.get_env([:wok_async_message_handler, :messages_repo]).all(from pm in EctoProducerMessage, limit: ^number_of_messages, where: pm.topic == ^topic and pm.partition == ^partition, order_by: pm.id)
-      |> Enum.map(fn(message) -> {message.id, topic, partition, message.blob} end)
-    rescue
-      e ->
-        Exceptions.throw_exception(
-          e, 
-          %{topic: topic, partition: partition, number_of_messages: number_of_messages}, 
-          :messages, 
-          false
-        )
+    case Application.ensure_started(:ecto) do
+      :ok ->
+        Doteki.get_env([:wok_async_message_handler, :messages_repo])
+              .all(from pm in EctoProducerMessage, 
+                   limit: ^number_of_messages, 
+                   where: pm.topic == ^topic 
+                      and pm.partition == ^partition,
+                   order_by: pm.id)
+        |> Enum.map(fn(message) -> {message.id, topic, partition, message.blob} end)
+
+      _ ->
+        Logger.warn("WokAsyncMessageHandler.MessagesHandlers.Ecto : ecto not started ? return empty list of messages to produce.")
         :timer.sleep(1000) # to prevent DB spamming in case of troubles
         []
     end

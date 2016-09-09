@@ -18,12 +18,9 @@ defmodule WokAsyncMessageHandler.MessagesHandlers.EctoSpec do
       it do: expect(WokAsyncMessageHandler.MessagesHandlers.Ecto.messages "topic_1", 1, 2).to eq([{message1.id, "topic_1", 1, "blob1"}, {message3.id, "topic_1", 1, "blob3"}])
     end
 
-    context "when fetch is not ok" do
-      before do: allow(Repo).to accept(:all, fn(_) -> raise "Repo.all : mock for fetch not ok" end)
-      before do: allow(Exceptions).to accept(:throw_exception, fn(_exception, _data, :messages, false) -> nil end)
-      before do: {:shared, messages: WokAsyncMessageHandler.MessagesHandlers.Ecto.messages("topic_987", 12, 34)}
-      it do: expect(shared.messages).to eq([])
-      it do: expect(Exceptions).to accepted(:throw_exception, :any, count: 1)
+    context "when ecto is not started" do
+      before do: allow(Application).to accept(:ensure_started, fn(:ecto) -> {:error, :term} end)
+      it do: expect(WokAsyncMessageHandler.MessagesHandlers.Ecto.messages "topic_1", 1, 1).to eq([])
     end
   end
 
