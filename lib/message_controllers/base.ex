@@ -247,7 +247,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
         nil -> %{
           body: body, 
           payload: payload, 
-          record: (if return_record, do: struct(controller.model, new: true), else: nil)
+          record: (if return_record, do: struct(controller.model), else: nil)
         }
         struct -> %{body: body, payload: payload, record: struct}
       end

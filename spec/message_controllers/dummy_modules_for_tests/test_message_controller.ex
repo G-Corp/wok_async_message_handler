@@ -6,40 +6,41 @@ defmodule TestMessageController do
   @master_key nil
   use WokAsyncMessageHandler.MessageControllers.Base
 
-  def before_create(attributes) do
-    __MODULE__.test_before_create()
-    attributes
+  def before_create(event_data) do
+    __MODULE__.test_before_create(event_data)
+    Map.put(event_data, :added_data, :my_bc_added_data)
   end
+  def test_before_create(_event_data), do: nil
 
-  def test_before_create, do: nil
-
-  def after_create(struct) do
-    __MODULE__.test_after_create()
-    {:ok, struct}
+  def after_create(event_data) do
+    __MODULE__.test_after_create(event_data)
+    {:ok, event_data}
   end
+  def test_after_create(_event_data), do: nil
 
-  def test_after_create, do: nil
-
-  def after_destroy(struct) do
-    __MODULE__.test_callback(struct)
-    {:ok, struct}
+  def before_destroy(event_data) do
+    __MODULE__.test_before_destroy(event_data)
+    Map.put(event_data, :added_data, :my_bd_added_data)
   end
+  def test_before_destroy(_event_data), do: :ok
 
-  def test_callback, do: :ok
-
-  def before_update(attributes) do
-    __MODULE__.test_before_update()
-    attributes
+  def after_destroy(event_data) do
+    __MODULE__.test_after_destroy(event_data)
+    {:ok, event_data}
   end
+  def test_after_destroy(_event_data), do: :ok
 
-  def test_before_update, do: :ok
-
-  def after_update(struct) do
-    __MODULE__.test_after_update()
-    {:ok, struct}
+  def before_update(event_data) do
+    __MODULE__.test_before_update(event_data)
+    Map.put(event_data, :added_data, :my_bu_added_data)
   end
+  def test_before_update(_event_data), do: :ok
 
-  def test_after_update, do: :ok
+  def after_update(event_data) do
+    __MODULE__.test_after_update(event_data)
+    {:ok, event_data}
+  end
+  def test_after_update(_event_data), do: :ok
 end
 
 defmodule TestMessageControllerWithMasterKey do

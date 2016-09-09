@@ -73,23 +73,37 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.DestroySpec do
 
         context "when payload id matches with a resource id" do
           context "when the whole transaction is ok" do
-            let! :event, do: TestMessage.build_event_message(payload, from_bot, 11)
+            let! :event, do: TestMessage.build_event_message(payload, from_bot, 11, [metadata: %{my_metadata: 9}])
+            let :before_destroy_event_data, do: %{
+              body: %{
+                "metadata" => %{"my_metadata" => 9}, 
+                "payload" => %{"id" => resource_to_delete.id}, 
+                "version" => 1
+              },
+              payload: %{"id" => resource_to_delete.id},
+              record: resource_to_delete
+            }
+            let :after_destroy_event_data, do: Map.merge(
+                  before_destroy_event_data,
+                  %{
+                    added_data: :my_bd_added_data,
+                    record: put_in(resource_to_delete.__meta__.state, :deleted)
+                  }
+                )
             before do
-              resource_id = resource_to_delete.id
-              allow(TestMessageController).to accept(:test_callback, fn
-                (%{body: %{"version" => 1}, payload: %{"id" => ^resource_id}, record: %{id: ^resource_id}} = a) -> a
-                _ -> raise("SHOULD NOT HAPPEN")
-              end)
+              allow(TestMessageController).to accept(:test_before_destroy)
+              allow(TestMessageController).to accept(:test_after_destroy)
               {:shared, result: TestMessageController.destroy(event)}
             end
             it do: expect(shared.result).to eq(event)
             it do: expect(ConsumerMessageIndex |> Repo.all |> Enum.count).to eq(1)
             it do: expect(Repo).to accepted(:one, :any, count: 0)
             it do: expect(StoppedPartition |> Repo.all |> Enum.count ).to eq(0)
-            it do: expect(TestMessageController).to accepted(:test_callback, :any, count: 1)
             it do: expect(Repo.get(ConsumerMessageIndex, cmi.id).id_message).to eq(11)
             it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, ets_key))
                    .to eq([{ets_key, Repo.get(ConsumerMessageIndex, cmi.id)}])
+            it do: expect(TestMessageController).to accepted(:test_before_destroy, [before_destroy_event_data], count: 1)
+            it do: expect(TestMessageController).to accepted(:test_after_destroy, [after_destroy_event_data], count: 1)
           end
 
           context "when using another field as id to find the message" do
@@ -107,7 +121,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.DestroySpec do
 
           context "when delete fails" do
             before do
-              allow(TestMessageController).to accept(:test_callback)
+              allow(TestMessageController).to accept(:test_before_destroy)
+              allow(TestMessageController).to accept(:test_after_destroy)
               allow(Repo).to accept(:delete, fn(_) -> {:error, :ecto_changeset} end)
               exception = try do
                 TestMessageController.destroy(event)
@@ -119,7 +134,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.DestroySpec do
 
             it do: expect(StoppedPartition |> Repo.all |> Enum.count ).to eq(1)
             it do: expect(shared.fresh_cmi.id_message).to eq(10)
-            it do: expect(TestMessageController).to accepted(:test_callback, :any, count: 0)
+            it do: expect(TestMessageController).to accepted(:test_before_destroy, :any, count: 0)
+            it do: expect(TestMessageController).to accepted(:test_after_destroy, :any, count: 0)
             it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, ets_key))
                     .to eq([{ets_key, shared.fresh_cmi}])
             it do: expect(String.match?(shared.exception.message, ~r/Wok Async Message Handler Exception @destroy$/))

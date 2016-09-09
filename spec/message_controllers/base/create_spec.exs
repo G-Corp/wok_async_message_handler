@@ -11,8 +11,27 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.CreateSpec do
   let! :partition, do: 1
   let! :ets_key, do: Helpers.build_ets_key(from_bot, topic, partition)
   let! :cmi, do: Repo.insert!(%ConsumerMessageIndex{from: from_bot, id_message: 401, partition: partition, topic: topic})
-  let! :processed_event, do: TestMessage.build_event_message(payload, from_bot, 401)
-  let! :unprocessed_event, do: TestMessage.build_event_message(payload, from_bot, 402)
+  let! :unprocessed_event, do: TestMessage.build_event_message(payload, from_bot, 402, [metadata: %{my_metadata: 9}])
+
+  let :before_create_event_data, do: %{
+      attributes: %{error: "new error", id: 1, message_id: 1224, partition: 1, topic: "create"},
+      body: %{
+        "metadata" => %{"my_metadata" => 9}, 
+        "payload" => %{
+          "error" => "new error", "id" => 1, "message_id" => 1224, "partition" => 1, "topic" => "create"}, 
+        "version" => 1
+      },
+      payload: %{"error" => "new error", "id" => 1, "message_id" => 1224, "partition" => 1, "topic" => "create"},
+      record: struct(StoppedPartition)
+    }
+
+    let :after_create_event_data, do: Map.merge(
+      before_create_event_data,
+      %{
+        added_data: :my_bc_added_data,
+        record: Repo.one(StoppedPartition)
+      }
+    )
 
   before do
     if( :ets.info(Helpers.ets_table) == :undefined ) do
@@ -28,7 +47,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.CreateSpec do
     it do: expect(shared.result).to eq(unprocessed_event)
     it do: expect(StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
            .to eq(%{error: "new error", message_id: 1224, partition: 1, topic: "create"})
-    it do: expect(TestMessageController).to accepted(:test_before_create, :any, count: 1)
-    it do: expect(TestMessageController).to accepted(:test_after_create, :any, count: 1)
+    it do: expect(TestMessageController).to accepted(:test_before_create, [before_create_event_data], count: 1)
+    it do: expect(TestMessageController).to accepted(:test_after_create, [after_create_event_data], count: 1)
   end
 end
