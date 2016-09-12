@@ -4,7 +4,6 @@ defmodule WokAsyncMessageHandler.MessagesHandlers.EctoSpec do
   alias WokAsyncMessageHandler.Spec.Repo
   alias WokAsyncMessageHandler.Models.EctoProducerMessage
   alias WokAsyncMessageHandler.Models.StoppedPartition
-  alias WokAsyncMessageHandler.Helpers.Exceptions
 
   describe "#messages" do
     let! :t, do: Ecto.DateTime.utc
@@ -16,6 +15,13 @@ defmodule WokAsyncMessageHandler.MessagesHandlers.EctoSpec do
       it do: expect(WokAsyncMessageHandler.MessagesHandlers.Ecto.messages "topic_1", 1, 1).to eq([{message1.id, "topic_1", 1, "blob1"}])
       it do: expect(WokAsyncMessageHandler.MessagesHandlers.Ecto.messages "topic_2", 1, 1000).to eq([{message2.id, "topic_2", 1, "blob2"}])
       it do: expect(WokAsyncMessageHandler.MessagesHandlers.Ecto.messages "topic_1", 1, 2).to eq([{message1.id, "topic_1", 1, "blob1"}, {message3.id, "topic_1", 1, "blob3"}])
+    end
+
+    context "when fetch is not ok" do
+      before do: allow(Repo).to accept(:all, fn(_) -> raise "Repo.all : mock for fetch not ok" end)
+      before do: allow(Exceptions).to accept(:throw_exception, fn(_exception, _data, :messages, false) -> nil end)
+      before do: {:shared, messages: WokAsyncMessageHandler.MessagesHandlers.Ecto.messages("topic_987", 12, 34)}
+      it do: expect(shared.messages).to eq([])
     end
 
     context "when ecto is not started" do
@@ -52,7 +58,7 @@ defmodule WokAsyncMessageHandler.MessagesHandlers.EctoSpec do
       before do
         {:shared, result: WokAsyncMessageHandler.MessagesHandlers.Ecto.response(message.id, {:error, "an error"}, true) }
       end
-      it do: expect(shared.result ).to eq(:exit)
+      it do: expect(shared.result).to eq(:exit)
       it do: expect(WokAsyncMessageHandler.MessagesHandlers.Ecto).to accepted(:log_warning, :any, count: 1)
       it do: expect(StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
             .to eq(%{topic: "topic2", partition: 3, message_id: message.id, error: "Elixir.WokAsyncMessageHandler.MessagesHandlers.Ecto error while sending message #{message.id}\n\"an error\"\nproducer exited."})

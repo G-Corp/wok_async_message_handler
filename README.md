@@ -130,6 +130,11 @@ arguments are:
   - partition : integer, broker partition id  
   - topic : string, topic  
 
+14. **for test only**, use helpers to validate a stored message in database is what you expected:
+```
+WokAsyncMessageHandler.Helpers.TestMessage.payload_to_wok_message("topic", "partition_key", "from", "to", %{version: 1, payload: %{k: "v"}, metadata: %{...}})
+```
+
 
 that's it! You now can produce and consume messages.  
 
@@ -167,39 +172,45 @@ By default, this consumer will consume : "created", "destroyed" and "updated" ev
 If you want you can add method in your controller to handle cutom events.  
 
 
-You can use hooks in your controller. Just redefine these methods in your controller:  
+You can use hooks in your controller.
+All hooks takes a map ("event_data") as arguments, and must return an enriched version of the same map.
+They work as chained callbacks: each callback receive the "event_data" the precedent callback returns.
+With this mechanism you can add data to pass to other callbacks (like "metadata" from body).
+**Do not remove initial data, or your app can raise an exception. You can change data inside maps, but do not delete any data
+if you are not sure of what you do.**
+
+To use hooks in your code, just override these methods in your controller:  
 
 * ```def process_create(controller, event)```
   * this method by default register the model into your database.
   * It can return:
   * {:ok, data} : data will be argument for after_create callback. By default it is the struct returned by ecto insert
   * {:error, data} : will rollback the transaction and stop the bot. By default it is the changeset returned by ecto insert
-* ```def before_create(attributes)```
+* ```def before_create(event_data)```
+  * it returns an enriched "event_data" map
   * if you use the default process_create function, you can redefine this function
-  * this callback is by default called INSIDE ```process_create``` and take the list of attributes from message as a %{key: value} map
+  * this callback is by default called INSIDE ```process_create```
   * if you rewrite your own ```process_create```, this callback is no more called, except if you put it in your code again.
 * ```def after_create(data)```
   * this callback is called OUTSIDE process_create (= always!) and take a data (by default the struct returned by ecto insert).
-  * By default, it just returns the struct.
+  * it returns a tuple ```{:ok, ...}```. For now, only :ok is checked for success.
   * if you rewrite your own ```process_create```, this callback is still called.
 
 Others callbacks work the same way:
 
-* ```def process_update(controller, event)```
-* ```def before_update(attributes)```
-* ```def after_update(ecto_schema)```
-* ```def after_destroy(ecto_schema)```
-* for now, there are no ```before_destroy``` or ```process_destroy```
+* ```def process_update(event_data_returned_from_before_update)```
+* ```def before_update(%{body: versioned_body, payload: payload_from_body, record: found_or_empty_struct} = event_data)```
+* ```def after_update(%{body: versioned_body, payload: payload_from_body, record: inserted_or_updated_struct[,your_data: %{...}]} = event_data)```
+* ```def before_destroy(%{body: versioned_body, payload: payload_from_body, record: found_struct_or_nil} = event_data)```
+* ```def process_destroy(event_data_returned_from_before_destroy)```
+* ```def after_destroy(%{body: versioned_body, payload: payload_from_body, record: nil_or_deleted_struct[,your_data: %{...}]} = event_data)```
 
-**before** are called before the database update/delete and take the payload from the event as map.  
-It returns a map used as the schema data for sql query.  
-(The default hook as you can see returns just what's inside the payload = it does nothing)  
-**after** are called just after the database update/delete and take the ecto schema returned by the query call as argument.  
-It returns {:ok, ecto_schema}. If something else is returned, the transaction is canceled and the consumer will stop consuming 
-this partition. It will be recorded in ```stopped_partitions``` table.
-
-"create" code in WokAsyncMessageHandler.MessageControllers.Base is just an alias of "update" for now:  
-```def create(event), do: update(event)```
+**before** are called before the database update/delete.  
+It returns an enriched "event_data" map.  
+(The default hook as you can see returns just what's inside the event_data = it does nothing)  
+**after** are called just after the database update/delete.  
+It returns {:ok, event_data}. If something else is returned, the transaction is canceled and 
+the consumer will stop consuming this partition. This failure will be recorded in ```stopped_partitions``` table.
 
 By default, create/1, update/1, destroy/1 will do exactly what they need to to.
 create will add a new record in the DB, mapping message fields to db table fields.
@@ -216,6 +227,17 @@ If my payload is ```{...message_id: 123...}```, then the generated SQL will be:
 ```
 ... WHERE master_id = 123 ...
 ```
+
+You can use public methods from WokAsyncMessageHandler.MessageControllers.Base.Helpers to manipulate messages data:  
+* expected_version_of_body
+* record_and_body_from_event
+* build_ets_key
+* update_consumer_message_index
+* message_not_already_processed?
+* update_consumer_message_index_ets
+* event_data_with_attributes
+
+
 
 ## serializers
 

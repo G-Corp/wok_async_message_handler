@@ -1,23 +1,23 @@
 defmodule WokAsyncMessageHandler.Helpers.TestMessage do
   require Record
 
-  Record.defrecord(:message_transfert, 
+  Record.defrecord(:message_transfert,
     Record.extract(
-      :message_transfert, 
+      :message_transfert,
       from_lib: "wok_message_handler/include/wok_message_handler.hrl"
       )
-    ) 
+    )
 
   Record.defrecord(:wok_msg,
     Record.extract(
-      :wok_msg, 
+      :wok_msg,
       from_lib: "wok_message_handler/include/wok_message_handler.hrl"
       )
     )
 
   Record.defrecord(:message,
    Record.extract(
-     :message, 
+     :message,
      from_lib: "wok_message_handler/include/wok_message_handler.hrl"
      )
    )
@@ -48,5 +48,15 @@ defmodule WokAsyncMessageHandler.Helpers.TestMessage do
     metadata = Keyword.get(options, :metadata, nil)
     unless is_nil(metadata), do: body = Map.put(body, :metadata, metadata)
     Poison.encode! [body]
+  end
+
+  def build_wok_message(topic, key, from, to, body) do
+    Wok.Message.encode_message(
+      {topic, key},
+      from,
+      to,
+      [body] |> Poison.encode!
+    )
+    |> elem(3)
   end
 end
