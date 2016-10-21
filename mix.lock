@@ -18,4 +18,4 @@
   "poolgirl": {:git, "https://github.com/botsunit/poolgirl.git", "b9e52d711bc8dfb55d26c2de0b44cb4e2e774eb3", [branch: "master"]},
   "postgrex": {:hex, :postgrex, "0.12.0", "bdeeb4c42768c47c3c92228e66c70357fe9a9384fbc9de06abba774b22dd0635", [:mix], [{:connection, "~> 1.0", [hex: :connection, optional: false]}, {:db_connection, "~> 1.0-rc.4", [hex: :db_connection, optional: false]}, {:decimal, "~> 1.0", [hex: :decimal, optional: false]}]},
   "uuid": {:git, "https://github.com/botsunit/erlang-uuid.git", "582cab69bdff5c56ca3907226ed7dca8663b5701", [tag: "0.6.0"]},
-  "wok": {:git, "git@gitlab.botsunit.com:msaas/wok.git", "27e33d7b120329f0ba8975f3c5c3b10484b512a4", [branch: "move_rest"]}}
+  "wok": {:git, "git@gitlab.botsunit.com:msaas/wok.git", "5c25ac3872719e9728f736f7f6f52a3d3b13e6a9", [branch: "move_rest"]}}
