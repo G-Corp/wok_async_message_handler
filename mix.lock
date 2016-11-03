@@ -8,7 +8,7 @@
   "espec": {:hex, :espec, "0.8.28", "f002710673d215876c4ca6fc74cbf5e330954badea7389d2284d2050940f1779", [:mix], [{:meck, "~> 0.8.4", [hex: :meck, optional: false]}]},
   "goldrush": {:hex, :goldrush, "0.1.8", "2024ba375ceea47e27ea70e14d2c483b2d8610101b4e852ef7f89163cdb6e649", [:rebar3], []},
   "jsx": {:hex, :jsx, "2.8.0", "749bec6d205c694ae1786d62cea6cc45a390437e24835fd16d12d74f07097727", [:mix, :rebar], []},
-  "kafe": {:git, "https://github.com/botsunit/kafe.git", "f8a252e7ac0e4a752e04a8c2c0f21f562af6807b", [branch: "2.0.0"]},
+  "kafe": {:git, "https://github.com/botsunit/kafe.git", "c0d56c6f5a801e4b0b7f5f790baeb2cff5d9c0a3", [branch: "2.0.0"]},
   "lager": {:hex, :lager, "3.2.1", "eef4e18b39e4195d37606d9088ea05bf1b745986cf8ec84f01d332456fe88d17", [:rebar3], [{:goldrush, "0.1.8", [hex: :goldrush, optional: false]}]},
   "lager_json_formatter": {:hex, :lager_json_formatter, "0.1.1", "5c708f540f23774bda3f7b3d41d6f1ff17232d9178a85304d7974c152b758bdf", [:rebar3, :mix, :make], [{:jsx, "~> 2.8.0", [hex: :jsx, optional: false]}, {:lager, "~> 3.2.0", [hex: :lager, optional: false]}]},
   "meck": {:hex, :meck, "0.8.4", "59ca1cd971372aa223138efcf9b29475bde299e1953046a0c727184790ab1520", [:rebar, :make], []},
@@ -18,4 +18,4 @@
   "poolgirl": {:git, "https://github.com/botsunit/poolgirl.git", "b9e52d711bc8dfb55d26c2de0b44cb4e2e774eb3", [branch: "master"]},
   "postgrex": {:hex, :postgrex, "0.12.0", "bdeeb4c42768c47c3c92228e66c70357fe9a9384fbc9de06abba774b22dd0635", [:mix], [{:connection, "~> 1.0", [hex: :connection, optional: false]}, {:db_connection, "~> 1.0-rc.4", [hex: :db_connection, optional: false]}, {:decimal, "~> 1.0", [hex: :decimal, optional: false]}]},
   "uuid": {:git, "https://github.com/botsunit/erlang-uuid.git", "582cab69bdff5c56ca3907226ed7dca8663b5701", [tag: "0.6.0"]},
-  "wok": {:git, "git@gitlab.botsunit.com:msaas/wok.git", "cc79c70b3b8363a331654b11570bbd835629a933", [branch: "move_rest"]}}
+  "wok": {:git, "git@gitlab.botsunit.com:msaas/wok.git", "e804324efcbe5d96f0fa2b10fa35e6472da231ef", [branch: "move_rest"]}}
