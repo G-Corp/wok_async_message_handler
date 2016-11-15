@@ -156,4 +156,122 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
       it do: {:error, "wok message error"} = DummyEnqueuer.enqueue({"my_topic", "fake_id"}, "from_bot", "bot/resource/created", %{id: "fake_id"})
     end
   end
+
+  describe "#enqueue_simple_message" do
+    let :fake_struct, do: %{__struct__: TestEctoSchema, id: "fake_idsimple"}
+    before do
+      allow(Repo).to accept(:insert, fn(fake_struct) -> {:ok, fake_struct} end )
+      allow(:kafe).to accept(:partitions, fn(_) -> [0, 1] end)
+    end
+
+    context "with simple payload" do
+      let :payload, do: %{id: "fake_idsimple"}
+
+      context "when no error" do
+        before do
+          {:ok, message} = DummyEnqueuer.enqueue_simple_message(payload)
+          {:shared, message: message}
+        end
+
+        it do: expect(Repo).to accepted(:insert, :any, count: 1)
+        it do: expect(shared.message.partition).to eq(0)
+        it do: expect(shared.message.topic).to eq("messages_topic")
+        it do: expect(shared.message.blob).to eq(
+              Wok.Message.encode_message(
+                                          {"messages_topic", "fake_idsimple"},
+                                          "from_bot",
+                                          "from_bot",
+                                          "[{\"version\":1,\"payload\":{\"id\":\"fake_idsimple\"}}]"
+                                          ) |> elem(3)
+                                        )
+      end
+      
+
+
+      context "with options and metadatas" do
+        let :options, do: [metadata: %{key: :value}, topic: "custom_topic", from: "me", to: "you"]
+        before do
+          {:ok, message} = DummyEnqueuer.enqueue_simple_message(payload, options)
+          {:shared, message: message}
+        end
+
+        it do: expect(Repo).to accepted(:insert, :any, count: 1)
+        it do: expect(shared.message.partition).to eq(0)
+        it do: expect(shared.message.topic).to eq("custom_topic")
+        it do: expect(shared.message.blob).to eq(
+              Wok.Message.encode_message(
+                                          {"custom_topic", "fake_idsimple"},
+                                          "me",
+                                          "you",
+                                          "[{\"version\":1,\"payload\":{\"id\":\"fake_idsimple\"},\"metadata\":{\"key\":\"value\"}}]"
+                                          ) |> elem(3)
+                                        )
+      end
+
+      context "when storage error" do
+        before do: allow(Repo).to accept(:insert, fn(_fake_struct) -> {:error, "storage error"} end )
+        it do: {:error, "storage error"} = DummyEnqueuer.enqueue_simple_message(payload)
+      end
+
+      context "when wok message error" do
+        before do: allow(Wok.Message).to accept(:encode_message, fn(_, _, _, _) -> {:error, "wok message error"} end )
+        it do: {:error, "wok message error"} = DummyEnqueuer.enqueue_simple_message(payload)
+      end
+    end
+
+    context "with complex payload" do
+      let :payload, do: [%{id: "fake_idsimple"}, %{id: "fake_idsimple2"}]
+
+      context "when no error" do
+        before do
+          {:ok, message} = DummyEnqueuer.enqueue_simple_message(payload)
+          {:shared, message: message}
+        end
+
+        it do: expect(Repo).to accepted(:insert, :any, count: 1)
+        it do: expect(shared.message.partition).to eq(0)
+        it do: expect(shared.message.topic).to eq("messages_topic")
+        it do: expect(shared.message.blob).to eq(
+              Wok.Message.encode_message(
+                                          {"messages_topic", "fake_idsimple"},
+                                          "from_bot",
+                                          "from_bot",
+                                          "[{\"version\":1,\"payload\":[{\"id\":\"fake_idsimple\"},{\"id\":\"fake_idsimple2\"}]}]"
+                                          ) |> elem(3)
+                                        )
+      end
+      
+
+
+      context "with options and metadatas" do
+        let :options, do: [metadata: %{key: :value}, topic: "custom_topic", from: "me", to: "you"]
+        before do
+          {:ok, message} = DummyEnqueuer.enqueue_simple_message(payload, options)
+          {:shared, message: message}
+        end
+
+        it do: expect(Repo).to accepted(:insert, :any, count: 1)
+        it do: expect(shared.message.partition).to eq(0)
+        it do: expect(shared.message.topic).to eq("custom_topic")
+        it do: expect(shared.message.blob).to eq(
+              Wok.Message.encode_message(
+                                          {"custom_topic", "fake_idsimple"},
+                                          "me",
+                                          "you",
+                                          "[{\"version\":1,\"payload\":[{\"id\":\"fake_idsimple\"},{\"id\":\"fake_idsimple2\"}],\"metadata\":{\"key\":\"value\"}}]"
+                                          ) |> elem(3)
+                                        )
+      end
+
+      context "when storage error" do
+        before do: allow(Repo).to accept(:insert, fn(_fake_struct) -> {:error, "storage error"} end )
+        it do: {:error, "storage error"} = DummyEnqueuer.enqueue_simple_message(payload)
+      end
+
+      context "when wok message error" do
+        before do: allow(Wok.Message).to accept(:encode_message, fn(_, _, _, _) -> {:error, "wok message error"} end )
+        it do: {:error, "wok message error"} = DummyEnqueuer.enqueue_simple_message(payload)
+      end
+    end
+  end
 end

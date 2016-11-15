@@ -6,7 +6,6 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.Ecto do
       alias WokAsyncMessageHandler.Models.StoppedPartition
       alias WokAsyncMessageHandler.Helpers.Exceptions
 
-      require Logger
       import Ecto.Query
 
       @spec enqueue_rtmessage(map, map) :: {:ok, EctoProducerMessage.t} | {:error, term}
@@ -16,19 +15,39 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.Ecto do
         from = Keyword.get(options, :from, @producer_name)
         to = Keyword.get(options, :to, "#{@producer_name}/real_time/notify")
         message = %{version: 1, payload: Map.put_new(data, :source, @producer_name)}
-        metadata = Keyword.get(options, :metadata)
-        if metadata == nil, do: message, else: Map.put(message, :metadata, metadata)
+        message = case Keyword.get(options, :metadata) do
+          nil -> message
+          metadata -> Map.put(message, :metadata, metadata)
+        end
         enqueue(topic_partition, from, to, [message])
       end
 
       @spec enqueue_message(Ecto.Schema.t, :atom, [metadata: map, topic: String.t]) :: {:ok, EctoProducerMessage.t} | {:error, term}
-      def enqueue_message(ecto_struct, event, options \\ []) do
+      def enqueue_message(%{__struct__: _} = ecto_struct, event, options \\ []) when is_atom(event) do
         serializer = schema_serializer(ecto_struct)
         message = build_message(ecto_struct, event, serializer, Keyword.get(options, :metadata))
         topic_partition = {Keyword.get(options, :topic, @messages_topic), serializer.partition_key(ecto_struct)}
         from = @producer_name
         to = serializer.message_route(event)
         enqueue(topic_partition, from, to, message)
+      end
+
+      @spec enqueue_simple_message(map | list, map) :: {:ok, EctoProducerMessage.t} | {:error, term}
+      def enqueue_simple_message(data, options \\ []) do
+        partition_key = partition_key(data, options)
+        topic_partition = {Keyword.get(options, :topic, @messages_topic), partition_key}
+        from = Keyword.get(options, :from, @producer_name)
+        to = Keyword.get(options, :to, @producer_name)
+        message = %{version: 1, payload: data}
+        message = case Keyword.get(options, :metadata) do
+          nil -> message
+          metadata -> Map.put(message, :metadata, metadata)
+        end
+        enqueue(topic_partition, from, to, [message])
+      end
+      defp partition_key([data|_], options), do: partition_key(data, options)
+      defp partition_key(data, options) when is_map(data) do
+        Map.get(data, Keyword.get(options, :pkey)) || List.first(Map.values data)
       end
 
       @spec enqueue(term, String.t, String.t, map) :: {:ok, Ecto.Schema.t} | {:error, Ecto.Changeset.t} | {:error, term}
