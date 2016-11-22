@@ -41,7 +41,7 @@ defmodule WokAsyncMessageHandler.Mixfile do
   defp deps do
     [
       {:espec, "~> 0.8.28", only: :test},
-      {:postgrex, ">= 0.12.0"},
+      {:postgrex, ">= 0.0.0"},
       {:ecto, "~> 2.0.0"},
       {:poison, "~> 2.2", override: true},
       {:wok, git: "git@gitlab.botsunit.com:msaas/wok.git", branch: "async_catch"}
