@@ -41,6 +41,12 @@ defmodule TestMessageController do
     {:ok, event_data}
   end
   def test_after_update(_event_data), do: :ok
+
+  def after_update_transaction(event_data) do
+    __MODULE__.test_after_update_transaction(event_data)
+    {:ok, event_data}
+  end
+  def test_after_update_transaction(_event_data), do: :ok
 end
 
 defmodule TestMessageControllerWithMasterKey do

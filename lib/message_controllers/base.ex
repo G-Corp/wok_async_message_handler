@@ -41,6 +41,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       def before_update(event_data), do: event_data
       def process_update(event), do: process_update(__MODULE__, event)
       def after_update(event_data), do: {:ok, event_data}
+      def after_update_transaction(event_data), do: {:ok, event_data}
       def before_destroy(event_data), do: event_data
       def process_destroy(event), do: process_destroy(__MODULE__, event)
       def after_destroy(event_data), do: {:ok, event_data}
@@ -51,6 +52,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
         before_destroy: 1,
         after_destroy: 1,
         after_update: 1,
+        after_update_transaction: 1,
         before_update: 1,
         create: 1,
         destroy: 1,
@@ -104,18 +106,20 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
 
     def do_update(controller, event) do
       if message_not_already_processed?(controller, event) do
-        {:ok, consumer_message_index} = controller.datastore.transaction(fn() ->
+        {:ok, {final_event_data, consumer_message_index} } = controller.datastore.transaction(fn() ->
           controller.process_update(event)
           |> case do
             {:ok, event_data} ->
-              {:ok, _} = controller.after_update(event_data)
-              update_consumer_message_index(controller, event)
+              {:ok, final_event_data} = controller.after_update(event_data)
+              consumer_message_index = update_consumer_message_index(controller, event)
+              {final_event_data, consumer_message_index}
             {:error, ecto_changeset} ->
               Logger.warn "Unable to update #{inspect controller.model} with event #{inspect event}@@ changeset : #{inspect ecto_changeset}"
               controller.datastore.rollback(ecto_changeset)
           end
         end)
         update_consumer_message_index_ets(consumer_message_index)
+        controller.after_update_transaction(final_event_data)
       end
       Wok.Message.noreply(event)
     end
@@ -245,8 +249,8 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       end
       |> case do
         nil -> %{
-          body: body, 
-          payload: payload, 
+          body: body,
+          payload: payload,
           record: (if return_record, do: struct(controller.model), else: nil)
         }
         struct -> %{body: body, payload: payload, record: struct}

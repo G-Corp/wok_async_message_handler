@@ -54,9 +54,9 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.UpdateSpec do
         let :before_update_event_data, do: %{
             attributes: %{error: "new error", id: 12, message_id: 1224, partition: 1, topic: "topic bidon"},
             body: %{
-              "metadata" => %{"my_metadata" => 2}, 
+              "metadata" => %{"my_metadata" => 2},
               "payload" => %{
-                "error" => "new error", "id" => 12, "message_id" => 1224, "partition" => 1, "topic" => "topic bidon"}, 
+                "error" => "new error", "id" => 12, "message_id" => 1224, "partition" => 1, "topic" => "topic bidon"},
               "version" => 1
             },
             payload: %{"error" => "new error", "id" => 12, "message_id" => 1224, "partition" => 1, "topic" => "topic bidon"},
@@ -72,6 +72,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.UpdateSpec do
         before do: true = :ets.insert(:botsunit_wok_consumers_message_index, {ets_key, cmi})
         before do: allow(TestMessageController).to accept(:test_before_update)
         before do: allow(TestMessageController).to accept(:test_after_update)
+        before do: allow(TestMessageController).to accept(:test_after_update_transaction)
 
         context "when insert in db is ok" do
           before do: {:shared, result: TestMessageController.update(unprocessed_event)}
@@ -82,6 +83,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.UpdateSpec do
                  .to eq(%{topic: "topic bidon", partition: 1, message_id: 1224, error: "new error"})
           it do: expect(TestMessageController).to accepted(:test_before_update, [before_update_event_data], count: 1)
           it do: expect(TestMessageController).to accepted(:test_after_update, [after_update_event_data], count: 1)
+          it do: expect(TestMessageController).to accepted(:test_after_update_transaction, [after_update_event_data], count: 1)
           it do: expect(Repo.get(ConsumerMessageIndex, cmi.id).id_message).to eq(402)
           it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, ets_key))
                  .to eq([{ets_key, Repo.get(ConsumerMessageIndex, cmi.id)}])
@@ -133,7 +135,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.UpdateSpec do
               e -> e
             end
             {:shared, changeset: changeset, exception: exception, fresh_cmi: Repo.get(ConsumerMessageIndex, cmi.id)}
-          end              
+          end
           it do: expect(StoppedPartition |> Repo.all |> Enum.count ).to eq(0)
           it do: expect(shared.fresh_cmi.id_message).to eq(401)
           it do: expect(:ets.lookup(:botsunit_wok_consumers_message_index, ets_key))
@@ -141,7 +143,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.UpdateSpec do
           it do: expect(String.match?(shared.exception.message, ~r/Wok Async Message Handler Exception @update$/))
         end
       end
-        
+
 
       context "wihtout any id_message in ets or db" do
         before do
