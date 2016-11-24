@@ -38,6 +38,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
       def before_create(event_data), do: event_data
       def process_create(event), do: process_create(__MODULE__, event)
       def after_create(event_data), do: {:ok, event_data}
+      def after_create_transaction(event_data), do: {:ok, event_data}
       def before_update(event_data), do: event_data
       def process_update(event), do: process_update(__MODULE__, event)
       def after_update(event_data), do: {:ok, event_data}
@@ -50,6 +51,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
         after_create: 1,
         before_create: 1,
         before_destroy: 1,
+        after_create_transaction: 1,
         after_destroy: 1,
         after_update: 1,
         after_update_transaction: 1,
@@ -75,18 +77,20 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base do
 
     def do_create(controller, event) do
       if message_not_already_processed?(controller, event) do
-        {:ok, consumer_message_index} = controller.datastore.transaction(fn() ->
+        {:ok, {final_event_data, consumer_message_index} } = controller.datastore.transaction(fn() ->
           controller.process_create(event)
           |> case do
             {:ok, event_data} ->
-              {:ok, _} = controller.after_create(event_data)
-              update_consumer_message_index(controller, event)
+              {:ok, final_event_data} = controller.after_create(event_data)
+              consumer_message_index = update_consumer_message_index(controller, event)
+              {final_event_data, consumer_message_index}
             {:error, ecto_changeset} ->
               Logger.warn "Unable to create #{inspect controller.model} with event #{inspect event}@@ changeset : #{inspect ecto_changeset}"
               controller.datastore.rollback(ecto_changeset)
           end
         end)
         update_consumer_message_index_ets(consumer_message_index)
+        controller.after_create_transaction(final_event_data)
       end
       Wok.Message.noreply(event)
     end

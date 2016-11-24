@@ -16,9 +16,9 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.CreateSpec do
   let :before_create_event_data, do: %{
       attributes: %{error: "new error", id: 1, message_id: 1224, partition: 1, topic: "create"},
       body: %{
-        "metadata" => %{"my_metadata" => 9}, 
+        "metadata" => %{"my_metadata" => 9},
         "payload" => %{
-          "error" => "new error", "id" => 1, "message_id" => 1224, "partition" => 1, "topic" => "create"}, 
+          "error" => "new error", "id" => 1, "message_id" => 1224, "partition" => 1, "topic" => "create"},
         "version" => 1
       },
       payload: %{"error" => "new error", "id" => 1, "message_id" => 1224, "partition" => 1, "topic" => "create"},
@@ -43,11 +43,13 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.CreateSpec do
     let! :payload, do: %{id: 1, topic: "create", partition: 1, message_id: 1224, error: "new error"}
     before do: allow(TestMessageController).to accept(:test_before_create)
     before do: allow(TestMessageController).to accept(:test_after_create)
+    before do: allow(TestMessageController).to accept(:test_after_create_transaction)
     before do: {:shared, result: TestMessageController.create(unprocessed_event)}
     it do: expect(shared.result).to eq(unprocessed_event)
     it do: expect(StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
            .to eq(%{error: "new error", message_id: 1224, partition: 1, topic: "create"})
     it do: expect(TestMessageController).to accepted(:test_before_create, [before_create_event_data], count: 1)
     it do: expect(TestMessageController).to accepted(:test_after_create, [after_create_event_data], count: 1)
+    it do: expect(TestMessageController).to accepted(:test_after_create_transaction, [after_create_event_data], count: 1)
   end
 end

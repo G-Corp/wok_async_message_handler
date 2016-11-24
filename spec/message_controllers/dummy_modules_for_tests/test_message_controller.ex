@@ -18,6 +18,12 @@ defmodule TestMessageController do
   end
   def test_after_create(_event_data), do: nil
 
+  def after_create_transaction(event_data) do
+    __MODULE__.test_after_create_transaction(event_data)
+    {:ok, event_data}
+  end
+  def test_after_create_transaction(_event_data), do: :ok
+
   def before_destroy(event_data) do
     __MODULE__.test_before_destroy(event_data)
     Map.put(event_data, :added_data, :my_bd_added_data)
