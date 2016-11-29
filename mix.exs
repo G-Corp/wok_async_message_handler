@@ -11,7 +11,7 @@ defmodule WokAsyncMessageHandler.Mixfile do
       preferred_cli_env: [espec: :test],
       start_permanent: Mix.env == :prod,
       test_coverage: [tool: ExCoveralls, test_task: "espec"],
-      version: "0.0.1",
+      version: "0.1.0",
       elixirc_options: [warnings_as_errors: true],
       aliases: [
         "espec": ["ecto.drop --quiet", "ecto.create --quiet", "ecto.migrate", "espec"],
@@ -44,7 +44,7 @@ defmodule WokAsyncMessageHandler.Mixfile do
       {:postgrex, ">= 0.0.0"},
       {:ecto, "~> 2.0.0"},
       {:poison, "~> 2.2", override: true},
-      {:wok, git: "git@gitlab.botsunit.com:msaas/wok.git", branch: "async_catch"}
+      {:wok, git: "git@gitlab.botsunit.com:msaas/wok.git", tag: "0.6.0"}
     ]
   end
 end
