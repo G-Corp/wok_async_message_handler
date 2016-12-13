@@ -8,7 +8,7 @@
   "espec": {:hex, :espec, "0.8.28", "f002710673d215876c4ca6fc74cbf5e330954badea7389d2284d2050940f1779", [:mix], [{:meck, "~> 0.8.4", [hex: :meck, optional: false]}]},
   "goldrush": {:hex, :goldrush, "0.1.8", "2024ba375ceea47e27ea70e14d2c483b2d8610101b4e852ef7f89163cdb6e649", [:rebar3], []},
   "jsx": {:hex, :jsx, "2.8.1", "1453b4eb3615acb3e2cd0a105d27e6761e2ed2e501ac0b390f5bbec497669846", [:mix, :rebar3], []},
-  "kafe": {:hex, :kafe, "2.1.5", "290a132393623c084442f2aa24c03fe54e9e126dafe5a165461d1694a1e8b11b", [:make, :mix, :rebar3], [{:bristow, "~> 0.2.1", [hex: :bristow, optional: false]}, {:bucs, "~> 1.0.3", [hex: :bucs, optional: false]}, {:doteki, "~> 1.0.3", [hex: :doteki, optional: false]}, {:lager, "~> 3.2.0", [hex: :lager, optional: false]}, {:metrics, "~> 2.2.0", [hex: :metrics, optional: false]}, {:poolgirl, "~> 1.1.1", [hex: :poolgirl, optional: false]}]},
+  "kafe": {:hex, :kafe, "2.1.6", "b283016f21142be539e5f4ea3b750b604cbb1b5d9825bf16589c87290e437b12", [:make, :mix, :rebar3], [{:bristow, "~> 0.2.1", [hex: :bristow, optional: false]}, {:bucs, "~> 1.0.3", [hex: :bucs, optional: false]}, {:doteki, "~> 1.0.3", [hex: :doteki, optional: false]}, {:lager, "~> 3.2.0", [hex: :lager, optional: false]}, {:metrics, "~> 2.2.0", [hex: :metrics, optional: false]}, {:poolgirl, "~> 1.1.1", [hex: :poolgirl, optional: false]}]},
   "lager": {:hex, :lager, "3.2.1", "eef4e18b39e4195d37606d9088ea05bf1b745986cf8ec84f01d332456fe88d17", [:rebar3], [{:goldrush, "0.1.8", [hex: :goldrush, optional: false]}]},
   "lager_json_formatter": {:hex, :lager_json_formatter, "0.2.1", "e9b032fa3ea62ab44858a6b9d86b460952d23c93d5b18a78b8ef7e4046658499", [:make, :mix, :rebar3], [{:jsx, "~> 2.8.0", [hex: :jsx, optional: false]}, {:lager, "~> 3.2.0", [hex: :lager, optional: false]}]},
   "meck": {:hex, :meck, "0.8.4", "59ca1cd971372aa223138efcf9b29475bde299e1953046a0c727184790ab1520", [:make, :rebar], []},
@@ -18,4 +18,4 @@
   "poolgirl": {:hex, :poolgirl, "1.1.1", "860c653a9a3e228133b372efdb4a5963c8b7a0a0a317aa1224e6434f1daa2aa5", [:make, :mix, :rebar3], [{:doteki, "~> 1.0.3", [hex: :doteki, optional: false]}]},
   "postgrex": {:hex, :postgrex, "0.12.0", "bdeeb4c42768c47c3c92228e66c70357fe9a9384fbc9de06abba774b22dd0635", [:mix], [{:connection, "~> 1.0", [hex: :connection, optional: false]}, {:db_connection, "~> 1.0-rc.4", [hex: :db_connection, optional: false]}, {:decimal, "~> 1.0", [hex: :decimal, optional: false]}]},
   "uuid": {:git, "https://github.com/botsunit/erlang-uuid.git", "df9028133d545846622b0cac0f708ef9d2ad6f7a", [tag: "0.7.1"]},
-  "wok": {:git, "git@gitlab.botsunit.com:msaas/wok.git", "969adc231e0712f6eff1a1d26d686c2eb3094b83", [tag: "0.6.2"]}}
+  "wok": {:git, "git@gitlab.botsunit.com:msaas/wok.git", "7301d3705864b6de62c96ee13cc29bea67b8af49", [tag: "0.6.3"]}}
