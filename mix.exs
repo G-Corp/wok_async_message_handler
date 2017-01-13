@@ -11,7 +11,7 @@ defmodule WokAsyncMessageHandler.Mixfile do
       preferred_cli_env: [espec: :test],
       start_permanent: Mix.env == :prod,
       test_coverage: [tool: ExCoveralls, test_task: "espec"],
-      version: "0.1.4",
+      version: "0.2.0",
       elixirc_options: [warnings_as_errors: true],
       aliases: [
         "espec": ["ecto.drop --quiet", "ecto.create --quiet", "ecto.migrate", "espec"],
