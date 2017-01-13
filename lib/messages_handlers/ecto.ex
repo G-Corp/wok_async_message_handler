@@ -2,73 +2,70 @@ defmodule WokAsyncMessageHandler.MessagesHandlers.Ecto do
   @behaviour Wok.Producer
 
   alias WokAsyncMessageHandler.Models.EctoProducerMessage
-  alias WokAsyncMessageHandler.Models.StoppedPartition
 
   require Logger
   import Ecto.Query
 
-  @spec messages(String.t, integer, integer) :: list(tuple)
-  def messages(topic, partition, number_of_messages) do
+  @spec messages([{topic :: String.t, [partition :: integer]}], number_of_messages :: integer) ::
+        [{message_id :: integer, topic :: String.t, partition :: integer, message :: term}]
+  def messages(topics_partitions, number_of_messages) do
     case Application.ensure_started(:ecto) do
       :ok ->
         try do
-          Doteki.get_env([:wok_async_message_handler, :messages_repo])
-                .all(from pm in EctoProducerMessage, 
-                     limit: ^number_of_messages, 
-                     where: pm.topic == ^topic 
-                        and pm.partition == ^partition,
-                     order_by: pm.id)
-          |> Enum.map(fn(message) -> {message.id, topic, partition, message.blob} end)
+          # TODO rewrite this to use a single query for all topics - I can't see how
+          # to do this without Ecto 2.1's `or_where` and we're on 2.0.x for now.
+          topics_partitions
+          |> Enum.flat_map(fn {topic, partitions}->
+            (from pm in EctoProducerMessage,
+              where: pm.topic == ^topic
+                 and pm.partition in ^partitions,
+              order_by: pm.id,
+              limit: ^number_of_messages)
+            |> messages_repo.all
+            |> Enum.map(fn(message) -> {message.id, message.topic, message.partition, message.blob} end)
+          end)
         rescue
           e ->
-            Logger.warn("WokAsyncMessageHandler.MessagesHandlers.Ecto : exception #{inspect e.message}. Rseturn empty list of messages to produce.")
+            __MODULE__.log_warning("WokAsyncMessageHandler.MessagesHandlers.Ecto : exception #{inspect e.message}. Return empty list of messages to produce.")
             :timer.sleep(1000) # to prevent DB spamming in case of troubles
             []
         end
       _ ->
-        Logger.warn("WokAsyncMessageHandler.MessagesHandlers.Ecto : ecto not started ? return empty list of messages to produce.")
+        __MODULE__.log_warning("WokAsyncMessageHandler.MessagesHandlers.Ecto : ecto not started ? Return empty list of messages to produce.")
         :timer.sleep(1000) # to prevent DB spamming in case of troubles
         []
     end
   end
 
-  @spec response(integer, term, boolean) :: :next | :exit | :retry
-  def response(message_id, response, retry \\ false) do
-    process_response(message_id, response, retry)
-  end
-
-  @spec process_response(integer, term, boolean) :: :next | :exit | :retry
-  def process_response(message_id, response, _retry) do
-    case response do
-      {:ok, _} ->
-        delete_row(message_id)
-      {:error, error} ->
-        stop_partition(message_id, "#{__MODULE__} error while sending message #{message_id}\n#{inspect error}\nproducer exited.")
-        :exit
-      {:stop, middleware, error} ->
-        stop_partition(message_id, "#{__MODULE__} message #{message_id} delivery stopped by middleware #{middleware}\n#{inspect error}\nproducer exited.")
-        :exit
+  @spec response(ok_message_ids :: [integer], ko_message_ids :: [integer]) :: :ok | :stop
+  def response(ok_message_ids, ko_message_ids) do
+    :ok = delete_rows(ok_message_ids)
+    case ko_message_ids do
+      [] ->
+        :ok
+      _ ->
+        __MODULE__.log_warning("WokAsyncMessageHandler.MessagesHandlers.Ecto: some messages were not sent to Kafka and will be retried (#{inspect ko_message_ids})")
+        :ok
     end
   end
 
-  @spec delete_row(integer) :: :next | :exit
-  defp delete_row(message_id) do
-    case Doteki.get_env([:wok_async_message_handler, :messages_repo]).delete(%EctoProducerMessage{id: message_id}) do
-      {:error, error} ->
-        stop_partition(message_id, "#{__MODULE__} unable to delete row #{message_id}\n#{inspect error}\nproducer exited.")
-        :exit
-      {:ok, _postgrex_result} -> #%Postgrex.Result{columns: nil, command: :delete, connection_id: 32823, num_rows: 1, rows: nil}}
-        :next
+  @spec delete_rows(message_ids :: [integer]) :: :ok
+  defp delete_rows(message_ids) do
+    try do
+      {_deleted, _} =
+        from(m in EctoProducerMessage, where: m.id in ^message_ids)
+        |> messages_repo.delete_all()
+    rescue
+      e -> __MODULE__.log_warning("WokAsyncMessageHandler.MessagesHandlers.Ecto: error while deleting produced messages #{inspect e.message}.")
     end
+    :ok
   end
 
-  @spec stop_partition(integer, String.t) :: no_return
-  defp stop_partition(message_id, error) do
-    __MODULE__.log_warning(error)
-    message = Doteki.get_env([:wok_async_message_handler, :messages_repo]).get(EctoProducerMessage, message_id)
-    Doteki.get_env([:wok_async_message_handler, :messages_repo]).insert!(%StoppedPartition{topic: message.topic, partition: message.partition, message_id: message_id, error: error})
+  @spec messages_repo() :: atom
+  defp messages_repo do
+    Doteki.get_env([:wok_async_message_handler, :messages_repo])
   end
 
-  @spec log_warning(String.t) :: no_return
+  @spec log_warning(String.t) :: term
   def log_warning(message), do: Logger.warn(message)
 end
