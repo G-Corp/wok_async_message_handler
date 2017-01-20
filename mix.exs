@@ -44,7 +44,7 @@ defmodule WokAsyncMessageHandler.Mixfile do
       {:postgrex, ">= 0.0.0"},
       {:ecto, "~> 2.0.0"},
       {:poison, "~> 2.2", override: true},
-      {:wok, git: "git@gitlab.botsunit.com:msaas/wok.git", branch: "async_producer_refacto"},
+      {:wok, git: "git@gitlab.botsunit.com:msaas/wok.git", branch: "all_in_one"},
     ]
   end
 end
