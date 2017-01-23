@@ -20,9 +20,9 @@ defmodule WokAsyncMessageHandler.MessagesHandlers.Ecto do
               where: pm.topic == ^topic
                  and pm.partition in ^partitions,
               order_by: pm.id,
-              limit: ^number_of_messages)
+              limit: ^number_of_messages,
+              select: {pm.id, pm.topic, pm.partition, pm.blob})
             |> messages_repo.all
-            |> Enum.map(fn(message) -> {message.id, message.topic, message.partition, message.blob} end)
           end)
         rescue
           e ->
