@@ -18,4 +18,4 @@
   "poolgirl": {:hex, :poolgirl, "1.1.1", "860c653a9a3e228133b372efdb4a5963c8b7a0a0a317aa1224e6434f1daa2aa5", [:make, :mix, :rebar3], [{:doteki, "~> 1.0.3", [hex: :doteki, optional: false]}]},
   "postgrex": {:hex, :postgrex, "0.12.0", "bdeeb4c42768c47c3c92228e66c70357fe9a9384fbc9de06abba774b22dd0635", [:mix], [{:connection, "~> 1.0", [hex: :connection, optional: false]}, {:db_connection, "~> 1.0-rc.4", [hex: :db_connection, optional: false]}, {:decimal, "~> 1.0", [hex: :decimal, optional: false]}]},
   "uuid": {:git, "https://github.com/botsunit/erlang-uuid.git", "df9028133d545846622b0cac0f708ef9d2ad6f7a", [tag: "0.7.1"]},
-  "wok": {:git, "git@gitlab.botsunit.com:msaas/wok.git", "448a0c63a3314c5f4475e0ec4bc5e99eb37c61da", [branch: "master"]}}
+  "wok": {:git, "git@gitlab.botsunit.com:msaas/wok.git", "ba777f73f5a1276ecee39fbcb3f8b079e5738a8c", [branch: "master"]}}
