@@ -12,7 +12,7 @@ defmodule WokAsyncMessageHandler.Models.EctoProducerMessage do
     field :topic, :string
     field :partition, :integer
     field :blob, :string
-    timestamps
+    timestamps()
   end
 
   def changeset(record, params \\ :invalid) do

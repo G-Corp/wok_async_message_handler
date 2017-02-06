@@ -22,7 +22,7 @@ defmodule WokAsyncMessageHandler.MessagesHandlers.Ecto do
               order_by: pm.id,
               limit: ^number_of_messages,
               select: {pm.id, pm.topic, pm.partition, pm.blob})
-            |> messages_repo.all
+            |> messages_repo().all
           end)
         rescue
           e ->
@@ -54,7 +54,7 @@ defmodule WokAsyncMessageHandler.MessagesHandlers.Ecto do
     try do
       {_deleted, _} =
         from(m in EctoProducerMessage, where: m.id in ^message_ids)
-        |> messages_repo.delete_all()
+        |> messages_repo().delete_all()
     rescue
       e -> __MODULE__.log_warning("WokAsyncMessageHandler.MessagesHandlers.Ecto: error while deleting produced messages #{inspect e.message}.")
     end

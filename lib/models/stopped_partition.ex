@@ -13,7 +13,7 @@ defmodule WokAsyncMessageHandler.Models.StoppedPartition do
     field :partition, :integer
     field :message_id, :integer
     field :error, :string
-    timestamps
+    timestamps()
   end
 
   def create_changeset(record, params \\ :invalid) do
