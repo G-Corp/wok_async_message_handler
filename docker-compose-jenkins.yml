@@ -1,0 +1,17 @@
+postgres:
+  image: postgres:9.5
+  environment:
+    POSTGRES_PASSWORD: 'mysecretpassword'
+
+wok_async_message_handler:
+  build: .
+  links:
+    - postgres:postgres
+  environment:
+    BUILD_NUMBER: $BUILD_NUMBER
+    SSH_AUTH_SOCK: '/tmp/ssh-agent'
+  volumes:
+    - $SSH_AUTH_SOCK:/tmp/ssh-agent
+    - $HOME/.ssh/known_hosts:/root/.ssh/known_hosts:ro
+  command: 'make --debug=b --output-sync=line -j4 -fMakefile.tasks jenkins'
+

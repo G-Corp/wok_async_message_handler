@@ -4,6 +4,9 @@ config :wok_async_message_handler, ecto_repos: [WokAsyncMessageHandler.Spec.Repo
 config :wok_async_message_handler, WokAsyncMessageHandler.Spec.Repo,
        adapter: Ecto.Adapters.Postgres,
        database: "wok_async_message_handler_test",
+       hostname: "postgres",
+       username: "postgres",
+       password: "mysecretpassword",
        pool: Ecto.Adapters.SQL.Sandbox,
        port: 5432
 

@@ -1,0 +1,18 @@
+.PHONY: default get-deps jenkins run-elixir-tests run-tests test-compile
+
+default: run-tests
+
+get-deps:
+	MIX_QUIET=1 mix deps.get || mix deps.get
+
+test-compile: get-deps
+	MIX_ENV=test mix compile
+
+run-elixir-tests: test-compile
+	MIX_ENV=test mix wok_async_message_handler.init
+	MIX_ENV=test mix do ecto.create, ecto.migrate, espec
+
+run-tests: run-elixir-tests
+
+jenkins: run-tests
+

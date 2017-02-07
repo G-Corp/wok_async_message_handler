@@ -139,7 +139,6 @@ generate messages controller to consume events from kafka:
 
   embed_template :service, """
   defmodule <%= @app_module %>.Wok.Gateway do
-    @application :<%= @app_name %> #should be your app name
     @producer_name "<%= @app_name %>" #'from' field in messages
     @realtime_topic "" #don't leave this blank!
     @messages_topic "" #don't leave this blank!
