@@ -42,8 +42,8 @@ defmodule WokAsyncMessageHandler.Mixfile do
     [
       {:espec, "~> 1.2.2", only: :test},
       {:postgrex, ">= 0.0.0"},
-      {:ecto, "~> 2.1.0"},
-      {:poison, "~> 3.0", override: true},
+      {:ecto, "~> 2.0"},
+      {:poison, ">= 0.0.0"},
       {:wok, git: "git@gitlab.botsunit.com:msaas/wok.git", tag: "0.7.1"},
     ]
   end
