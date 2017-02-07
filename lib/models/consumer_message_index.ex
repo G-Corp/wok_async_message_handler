@@ -13,7 +13,7 @@ defmodule WokAsyncMessageHandler.Models.ConsumerMessageIndex do
     field :id_message, :integer
     field :partition, :integer
     field :topic, :string
-    timestamps
+    timestamps()
   end
 
   def changeset(record, params \\ :invalid) do

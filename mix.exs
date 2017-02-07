@@ -5,7 +5,7 @@ defmodule WokAsyncMessageHandler.Mixfile do
     [
       app: :wok_async_message_handler,
       build_embedded: Mix.env == :prod,
-      deps: deps,
+      deps: deps(),
       elixir: "~> 1.2",
       elixirc_paths: elixirc_paths(Mix.env),
       preferred_cli_env: [espec: :test],
@@ -40,11 +40,11 @@ defmodule WokAsyncMessageHandler.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:espec, "~> 0.8.28", only: :test},
+      {:espec, "~> 1.2.2", only: :test},
       {:postgrex, ">= 0.0.0"},
-      {:ecto, "~> 2.0.0"},
-      {:poison, "~> 2.2", override: true},
-      {:wok, git: "git@gitlab.botsunit.com:msaas/wok.git", tag: "0.7.0"},
+      {:ecto, "~> 2.0"},
+      {:poison, ">= 0.0.0"},
+      {:wok, git: "git@gitlab.botsunit.com:msaas/wok.git", tag: "0.7.1"},
     ]
   end
 end

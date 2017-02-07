@@ -9,9 +9,9 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.CreateSpec do
   let! :from_bot, do: "from_bot"
   let! :topic, do: "topic"
   let! :partition, do: 1
-  let! :ets_key, do: Helpers.build_ets_key(from_bot, topic, partition)
-  let! :cmi, do: Repo.insert!(%ConsumerMessageIndex{from: from_bot, id_message: 401, partition: partition, topic: topic})
-  let! :unprocessed_event, do: TestMessage.build_event_message(payload, from_bot, 402, [metadata: %{my_metadata: 9}])
+  let! :ets_key, do: Helpers.build_ets_key(from_bot(), topic(), partition())
+  let! :cmi, do: Repo.insert!(%ConsumerMessageIndex{from: from_bot(), id_message: 401, partition: partition(), topic: topic()})
+  let! :unprocessed_event, do: TestMessage.build_event_message(payload(), from_bot(), 402, [metadata: %{my_metadata: 9}])
 
   let :before_create_event_data, do: %{
       attributes: %{error: "new error", id: 1, message_id: 1224, partition: 1, topic: "create"},
@@ -26,7 +26,7 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.CreateSpec do
     }
 
     let :after_create_event_data, do: Map.merge(
-      before_create_event_data,
+      before_create_event_data(),
       %{
         added_data: :my_bc_added_data,
         record: Repo.one(StoppedPartition)
@@ -44,12 +44,12 @@ defmodule WokAsyncMessageHandler.MessageControllers.Base.CreateSpec do
     before do: allow(TestMessageController).to accept(:test_before_create)
     before do: allow(TestMessageController).to accept(:test_after_create)
     before do: allow(TestMessageController).to accept(:test_after_create_transaction)
-    before do: {:shared, result: TestMessageController.create(unprocessed_event)}
-    it do: expect(shared.result).to eq(unprocessed_event)
+    before do: {:shared, result: TestMessageController.create(unprocessed_event())}
+    it do: expect(shared.result).to eq(unprocessed_event())
     it do: expect(StoppedPartition |> Repo.all |> List.first |> Map.take([:topic, :partition, :message_id, :error]))
            .to eq(%{error: "new error", message_id: 1224, partition: 1, topic: "create"})
-    it do: expect(TestMessageController).to accepted(:test_before_create, [before_create_event_data], count: 1)
-    it do: expect(TestMessageController).to accepted(:test_after_create, [after_create_event_data], count: 1)
-    it do: expect(TestMessageController).to accepted(:test_after_create_transaction, [after_create_event_data], count: 1)
+    it do: expect(TestMessageController).to accepted(:test_before_create, [before_create_event_data()], count: 1)
+    it do: expect(TestMessageController).to accepted(:test_after_create, [after_create_event_data()], count: 1)
+    it do: expect(TestMessageController).to accepted(:test_after_create_transaction, [after_create_event_data()], count: 1)
   end
 end

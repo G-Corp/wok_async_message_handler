@@ -38,7 +38,7 @@ defmodule Mix.Tasks.WokAsyncMessageHandler.Serializer do
 
     def partition_key(ecto_schema) do
       pkey = ecto_schema.id # use here the best data for your needs! ...
-      unless is_string(pkey), do: raise("partition_key must be a string!") # ... it just must be a string
+      unless Kernel.is_bitstring(pkey), do: raise("partition_key must be a string!") # ... it just must be a string
       pkey
     end
 
