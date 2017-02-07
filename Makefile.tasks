@@ -10,7 +10,8 @@ test-compile: get-deps
 
 run-elixir-tests: test-compile
 	MIX_ENV=test mix wok_async_message_handler.init
-	MIX_ENV=test mix do ecto.create, ecto.migrate, espec
+	MIX_ENV=test mix ecto.create
+	MIX_ENV=test mix espec
 
 run-tests: run-elixir-tests
 
