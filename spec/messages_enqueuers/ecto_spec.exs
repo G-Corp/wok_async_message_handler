@@ -70,7 +70,7 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
     context "when no error" do
       before do
         allow(Repo).to accept(:insert, fn(fake_struct) -> {:ok, fake_struct} end )
-        {:ok, message} = DummyEnqueuer.enqueue_message(fake_struct, :created)
+        {:ok, message} = DummyEnqueuer.enqueue_message(fake_struct(), :created)
         {:shared, message: message}
       end
      it do: expect(Repo).to accepted(:insert, :any, count: 1)
@@ -89,19 +89,19 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
 
     context "when storage error" do
       before do: allow(Repo).to accept(:insert, fn(_fake_struct) -> {:error, "storage error"} end )
-      it do: {:error, "storage error"} = DummyEnqueuer.enqueue_message(fake_struct, :created)
+      it do: {:error, "storage error"} = DummyEnqueuer.enqueue_message(fake_struct(), :created)
     end
 
     context "when wok message error" do
       before do: allow(Wok.Message).to accept(:encode_message, fn(_, _, _, _) -> {:error, "wok message error"} end )
-      it do: {:error, "wok message error"} = DummyEnqueuer.enqueue_message(fake_struct, :created)
+      it do: {:error, "wok message error"} = DummyEnqueuer.enqueue_message(fake_struct(), :created)
     end
 
     context "with custom topic and metadata" do
       before do
         allow(Repo).to accept(:insert, fn(fake_struct) -> {:ok, fake_struct} end )
         {:ok, message} = DummyEnqueuer.enqueue_message(
-                          fake_struct, 
+                          fake_struct(), 
                           :created, 
                           [metadata: %{key: :value}, topic: "blablatopic"]
                         )
@@ -169,7 +169,7 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
 
       context "when no error" do
         before do
-          {:ok, message} = DummyEnqueuer.enqueue_simple_message(payload)
+          {:ok, message} = DummyEnqueuer.enqueue_simple_message(payload())
           {:shared, message: message}
         end
 
@@ -191,7 +191,7 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
       context "with options and metadatas" do
         let :options, do: [metadata: %{key: :value}, topic: "custom_topic", from: "me", to: "you"]
         before do
-          {:ok, message} = DummyEnqueuer.enqueue_simple_message(payload, options)
+          {:ok, message} = DummyEnqueuer.enqueue_simple_message(payload(), options())
           {:shared, message: message}
         end
 
@@ -210,12 +210,12 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
 
       context "when storage error" do
         before do: allow(Repo).to accept(:insert, fn(_fake_struct) -> {:error, "storage error"} end )
-        it do: {:error, "storage error"} = DummyEnqueuer.enqueue_simple_message(payload)
+        it do: {:error, "storage error"} = DummyEnqueuer.enqueue_simple_message(payload())
       end
 
       context "when wok message error" do
         before do: allow(Wok.Message).to accept(:encode_message, fn(_, _, _, _) -> {:error, "wok message error"} end )
-        it do: {:error, "wok message error"} = DummyEnqueuer.enqueue_simple_message(payload)
+        it do: {:error, "wok message error"} = DummyEnqueuer.enqueue_simple_message(payload())
       end
     end
 
@@ -224,7 +224,7 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
 
       context "when no error" do
         before do
-          {:ok, message} = DummyEnqueuer.enqueue_simple_message(payload)
+          {:ok, message} = DummyEnqueuer.enqueue_simple_message(payload())
           {:shared, message: message}
         end
 
@@ -246,7 +246,7 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
       context "with options and metadatas" do
         let :options, do: [metadata: %{key: :value}, topic: "custom_topic", from: "me", to: "you"]
         before do
-          {:ok, message} = DummyEnqueuer.enqueue_simple_message(payload, options)
+          {:ok, message} = DummyEnqueuer.enqueue_simple_message(payload(), options())
           {:shared, message: message}
         end
 
@@ -265,12 +265,12 @@ defmodule WokAsyncMessageHandler.MessagesEnqueuers.EctoSpec do
 
       context "when storage error" do
         before do: allow(Repo).to accept(:insert, fn(_fake_struct) -> {:error, "storage error"} end )
-        it do: {:error, "storage error"} = DummyEnqueuer.enqueue_simple_message(payload)
+        it do: {:error, "storage error"} = DummyEnqueuer.enqueue_simple_message(payload())
       end
 
       context "when wok message error" do
         before do: allow(Wok.Message).to accept(:encode_message, fn(_, _, _, _) -> {:error, "wok message error"} end )
-        it do: {:error, "wok message error"} = DummyEnqueuer.enqueue_simple_message(payload)
+        it do: {:error, "wok message error"} = DummyEnqueuer.enqueue_simple_message(payload())
       end
     end
   end

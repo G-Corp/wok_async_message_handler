@@ -3,7 +3,7 @@ defmodule WokAsyncMessageHandler.Helpers.TestMessageSpec do
 
   describe "#build_wok_message" do
     before do: allow(:kafe).to accept(:partitions, fn(_) -> [0] end)
-    it do: expect(described_module.build_wok_message(
+    it do: expect(described_module().build_wok_message(
             "topic",
             "key",
             "from",
@@ -62,11 +62,11 @@ defmodule WokAsyncMessageHandler.Helpers.TestMessageSpec do
         false, 
         :undefined}
 
-      it do: expect(described_module.build_event_message(
-            payload,
-            from,
+      it do: expect(described_module().build_event_message(
+            payload(),
+            from(),
             23
-          )).to eq(expected_message)
+          )).to eq(expected_message())
     end
 
     context "when options" do
@@ -101,12 +101,12 @@ defmodule WokAsyncMessageHandler.Helpers.TestMessageSpec do
         %{}, 
         false, 
         :undefined}
-      it do: expect(described_module.build_event_message(
-            payload,
-            from,
+      it do: expect(described_module().build_event_message(
+            payload(),
+            from(),
             23,
             [metadata: %{seb_error: true}, partition: 999, topic: "my_topic", version: 2]
-          )).to eq(expected_message)
+          )).to eq(expected_message())
     end
   end
 end

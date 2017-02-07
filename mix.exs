@@ -12,7 +12,7 @@ defmodule WokAsyncMessageHandler.Mixfile do
       start_permanent: Mix.env == :prod,
       test_coverage: [tool: ExCoveralls, test_task: "espec"],
       version: "0.2.2",
-      # elixirc_options: [warnings_as_errors: true], # <--- Because generated files for tests have warnings !!!
+      elixirc_options: [warnings_as_errors: true],
       aliases: [
         "espec": ["ecto.drop --quiet", "ecto.create --quiet", "ecto.migrate", "espec"],
       ]
