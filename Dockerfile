@@ -1,4 +1,4 @@
-FROM jonathanperret/elixir:1.2.6
+FROM jonathanperret/elixir:1.4.0
 MAINTAINER piotr.kedziora@botsunit.com
 
 RUN apt-get update && apt-get -y install postgresql-client erlang-src
