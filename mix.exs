@@ -40,12 +40,11 @@ defmodule WokAsyncMessageHandler.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:espec, "~> 1.2.2", only: :test},
       {:postgrex, ">= 0.0.0"},
       {:ecto, "~> 2.0"},
       {:poison, ">= 0.0.0"},
       {:wok, git: "git@gitlab.botsunit.com:msaas/wok.git", tag: "0.7.1"},
-      {:excoveralls, "~> 0.6", only: :test}
+      {:espec, "~> 1.2.2", only: :test}
     ]
   end
 end
